@@ -1,469 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BluePay — World-Class Fintech Investment</title>
-  <link rel="stylesheet" href="global.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  <style>
-    /* Sticky Navbar */
-    nav { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; transition: 0.4s; padding: 25px 0; }
-    nav.scrolled { background: rgba(6, 8, 15, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); padding: 15px 0; }
-    
-    /* Hero */
-    .hero { min-height: 100vh; display: flex; align-items: center; padding: 140px 0 100px; position: relative; overflow: hidden; }
-    .hero-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 60px; align-items: center; }
-    .hero-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(26,86,219,0.1) 0%, transparent 70%); filter: blur(60px); z-index: -1; }
-    
-    /* Mockup */
-    .mockup-card { background: var(--bg2); border: 1px solid var(--borderb); border-radius: 30px; padding: 35px; box-shadow: var(--shadow-l); position: relative; }
-    .floating-chip { position: absolute; background: var(--bg3); border: 1px solid var(--border); padding: 14px 22px; border-radius: 50px; font-weight: 700; font-size: 14px; animation: float 6s ease-in-out infinite; z-index: 5; box-shadow: var(--shadow); }
-    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-
-    /* Trust Strip Marquee */
-    .trust-strip { padding: 40px 0; background: var(--bg); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); overflow: hidden; white-space: nowrap; }
-    .trust-track { display: inline-flex; animation: marquee 30s linear infinite; gap: 80px; }
-    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-
-    /* Testimonials */
-    .testimonial-viewport { min-height: 350px; position: relative; }
-    .testimonial-slide { position: absolute; top: 0; left: 0; width: 100%; opacity: 0; transition: 0.8s; visibility: hidden; }
-    .testimonial-slide.active { opacity: 1; visibility: visible; }
-
-    /* Mobile Nav Overlay */
-    #mobile-menu { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; background: var(--bg); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 35px; }
-
-    /* FAQ */
-    .faq-item { border-bottom: 1px solid var(--border); padding: 25px 0; cursor: pointer; }
-    .faq-item.active .faq-ans { display: block; }
-    .faq-ans { display: none; padding-top: 15px; color: var(--muted2); font-size: 15px; }
-
-    @media (max-width: 992px) {
-      .hero-grid { grid-template-columns: 1fr; text-align: center; }
-      .hero-mockup-area { display: none; }
-      .nav-desktop { display: none; }
-      .hamburger { display: block !important; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BluePay — Premium Fintech Investment</title>
+    <link rel="stylesheet" href="global.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .hero { padding: 120px 0 60px; min-height: 100vh; display: flex; align-items: center; }
+        .hero-img { width: 100%; border-radius: 30px; box-shadow: var(--shadow-l); border: 1px solid var(--border-blue); }
+        .trust-strip { background: var(--bg2); padding: 20px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); overflow: hidden; }
+        .marquee { display: flex; gap: 50px; animation: scroll 20s linear infinite; white-space: nowrap; }
+        @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        
+        @media (max-width: 1024px) {
+            .hero { text-align: center; padding-top: 100px; }
+            .hero .grid-2 { grid-template-columns: 1fr; }
+            .hero-img { display: none; }
+        }
+    </style>
 </head>
 <body data-page="index">
-  <div id="global-loader"><div class="spinner"></div></div>
+    <div id="global-loader"><div class="spinner"></div></div>
 
-  <!-- Mobile Menu Overlay -->
-  <div id="mobile-menu">
-    <i class="fa-solid fa-xmark" style="position: absolute; top: 40px; right: 40px; font-size: 32px;" onclick="toggleMenu(false)"></i>
-    <a href="investment-plans.html" style="font-size: 24px; font-weight: 800;">Plans</a>
-    <a href="leaderboard.html" style="font-size: 24px; font-weight: 800;">Leaderboard</a>
-    <a href="login.html" style="font-size: 24px; font-weight: 800;">Login</a>
-    <a href="register.html" class="btn btn-primary" style="width: 250px;">Get Started</a>
-  </div>
-
-  <nav id="main-nav">
-    <div class="container flex" style="justify-content: space-between; align-items: center;">
-      <a href="index.html" class="flex" style="gap: 12px; align-items: center;">
-        <div style="width: 42px; height: 42px; background: var(--blue); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-          <i class="fa-solid fa-b" style="color: white; font-size: 20px;"></i>
+    <nav class="mobile-header" style="display: flex;">
+        <div class="flex" style="gap: 10px;">
+            <div style="width: 32px; height: 32px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white; font-size: 14px;"></i></div>
+            <span style="font-size: 20px; font-weight: 900;">BluePay</span>
         </div>
-        <span style="font-size: 24px; font-weight: 900; letter-spacing: -1.5px;">BluePay</span>
-      </a>
-
-      <div class="nav-desktop" style="display: flex; gap: 40px; align-items: center;">
-        <a href="investment-plans.html" style="font-weight: 600; font-size: 15px;">Plans</a>
-        <a href="leaderboard.html" style="font-weight: 600; font-size: 15px;">Leaderboard</a>
-        <a href="#faq" style="font-weight: 600; font-size: 15px;">FAQ</a>
-        <div style="display: flex; gap: 15px;">
-          <a href="login.html" class="btn btn-outline" style="padding: 12px 24px;">Sign In</a>
-          <a href="register.html" class="btn btn-primary" style="padding: 12px 24px;">Get Started</a>
+        <div class="flex" style="gap: 15px;">
+            <a href="login.html" style="font-weight: 700; font-size: 14px;">Login</a>
+            <a href="register.html" class="btn btn-primary" style="padding: 10px 20px; font-size: 13px;">Join Now</a>
         </div>
-      </div>
+    </nav>
 
-      <i class="fa-solid fa-bars-staggered hamburger" style="display: none; font-size: 28px; cursor: pointer;" onclick="toggleMenu(true)"></i>
-    </div>
-  </nav>
-
-  <section class="hero">
-    <div class="hero-glow" style="top: -100px; right: -100px;"></div>
-    <div class="container hero-grid">
-      <div class="reveal">
-        <div class="badge" style="background: rgba(34,197,94,0.1); color: var(--green); padding: 8px 16px; border-radius: 50px; font-size: 12px; font-weight: 800; display: inline-block; margin-bottom: 25px;">
-          <i class="fa-solid fa-gift"></i> ₦200,000 WELCOME BONUS ACTIVE
-        </div>
-        <h1 style="font-size: clamp(42px, 5vw, 68px); margin-bottom: 25px;">
-          Your money should be <span class="grad-text">working harder.</span>
-        </h1>
-        <p style="font-size: 19px; margin-bottom: 45px; max-width: 550px;">
-          Join Nigeria's fastest-growing fintech investment platform. Earn daily rewards, enjoy bank-grade security, and get an instant ₦200,000 bonus today.
-        </p>
-        <div class="flex" style="gap: 20px; flex-wrap: wrap;">
-          <a href="register.html" class="btn btn-primary" style="padding: 20px 45px;">Create Free Account</a>
-          <a href="investment-plans.html" class="btn btn-outline" style="padding: 20px 45px;">View Investment Plans</a>
-        </div>
-        <div class="flex" style="margin-top: 50px; gap: 40px; flex-wrap: wrap;">
-          <div class="flex" style="gap: 12px; font-size: 13px; font-weight: 700; color: var(--muted2);">
-            <i class="fa-solid fa-shield-halved" style="color: var(--blue2); font-size: 18px;"></i> 256-BIT ENCRYPTION
-          </div>
-          <div class="flex" style="gap: 12px; font-size: 13px; font-weight: 700; color: var(--muted2);">
-            <i class="fa-solid fa-circle-check" style="color: var(--green); font-size: 18px;"></i> INSTANT WITHDRAWALS
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-mockup-area reveal" style="transition-delay: 0.2s;">
-        <div class="mockup-card">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px;">
-            <div>
-              <p style="font-size: 12px; font-weight: 700; color: var(--muted2);">AVAILABLE BALANCE</p>
-              <h2 style="font-size: 36px; margin-top: 5px;">₦1,240,500.00</h2>
+    <section class="hero container">
+        <div class="grid-2">
+            <div class="reveal">
+                <div class="badge" style="background: rgba(34,197,94,0.1); color: var(--green); padding: 8px 16px; border-radius: 50px; font-size: 12px; font-weight: 800; display: inline-block; margin-bottom: 20px;">
+                    <i class="fa-solid fa-gift"></i> ₦200,000 SIGNUP BONUS ACTIVE
+                </div>
+                <h1 style="font-size: clamp(40px, 5vw, 64px); margin-bottom: 24px;">Invest in your <span class="grad-text">financial freedom.</span></h1>
+                <p style="font-size: 18px; color: var(--muted2); margin-bottom: 40px; max-width: 500px;">Join Nigeria's elite investment community. Earn daily ROI, secure your capital, and withdraw instantly with bank-grade security.</p>
+                <div class="flex" style="gap: 15px; flex-wrap: wrap;">
+                    <a href="register.html" class="btn btn-primary" style="padding: 20px 40px;">Get Started Free</a>
+                    <a href="investment-plans.html" class="btn btn-outline" style="padding: 20px 40px;">View Plans</a>
+                </div>
             </div>
-            <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--blue); color: white; display: flex; align-items: center; justify-content: center; font-weight: 900;">AO</div>
-          </div>
-          <div style="display: grid; gap: 15px;">
-            <div style="background: var(--bg3); padding: 18px; border-radius: 15px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-              <div class="flex" style="gap: 12px;">
-                <div style="width: 35px; height: 35px; background: rgba(34,197,94,0.1); border-radius: 8px; color: var(--green); display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-arrow-down"></i></div>
-                <div><p style="font-size: 13px; font-weight: 800; color: var(--text);">Daily Claim</p><p style="font-size: 11px;">Today • Gold Plan</p></div>
-              </div>
-              <span style="color: var(--green); font-weight: 800;">+₦8,450.00</span>
+            <div class="reveal" style="display: flex; align-items: center; justify-content: center;">
+                <img src="https://images.unsplash.com/photo-1611974714024-462cdba1742a?auto=format&fit=crop&q=80&w=1000" class="hero-img" alt="Dashboard">
             </div>
-            <div style="background: var(--bg3); padding: 18px; border-radius: 15px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
-              <div class="flex" style="gap: 12px;">
-                <div style="width: 35px; height: 35px; background: rgba(26,86,219,0.1); border-radius: 8px; color: var(--blue2); display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-wallet"></i></div>
-                <div><p style="font-size: 13px; font-weight: 800; color: var(--text);">Deposit</p><p style="font-size: 11px;">Yesterday • Paystack</p></div>
-              </div>
-              <span style="color: var(--text); font-weight: 800;">+₦50,000.00</span>
-            </div>
-          </div>
         </div>
-        <div class="floating-chip" style="top: -25px; right: -20px;"><i class="fa-solid fa-bolt" style="color: var(--gold);"></i> +₦38,000 earned today</div>
-        <div class="floating-chip" style="bottom: 30px; left: -40px; animation-delay: 1.5s;"><i class="fa-solid fa-lock" style="color: var(--blue2);"></i> Funds 100% Secured</div>
-      </div>
+    </section>
+
+    <div class="trust-strip">
+        <div class="marquee">
+            <span class="flex" style="color: var(--muted2); font-weight: 800;"><i class="fa-solid fa-shield-check"></i> SECURED BY PAYSTACK</span>
+            <span class="flex" style="color: var(--muted2); font-weight: 800;"><i class="fa-solid fa-bolt"></i> INSTANT WITHDRAWALS</span>
+            <span class="flex" style="color: var(--muted2); font-weight: 800;"><i class="fa-solid fa-lock"></i> 256-BIT ENCRYPTION</span>
+            <span class="flex" style="color: var(--muted2); font-weight: 800;"><i class="fa-solid fa-circle-check"></i> 50k+ ACTIVE INVESTORS</span>
+            <!-- Duplicate for infinite effect -->
+            <span class="flex" style="color: var(--muted2); font-weight: 800;"><i class="fa-solid fa-shield-check"></i> SECURED BY PAYSTACK</span>
+            <span class="flex" style="color: var(--muted2); font-weight: 800;"><i class="fa-solid fa-bolt"></i> INSTANT WITHDRAWALS</span>
+        </div>
     </div>
-  </section>
 
-  <section style="background: var(--bg2); padding: 80px 0;">
-    <div class="container grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); text-align: center; gap: 40px;">
-      <div class="reveal">
-        <h2 class="gold-text" style="font-size: 48px;">50k+</h2>
-        <p style="font-weight: 700; font-size: 12px; letter-spacing: 1px;">ACTIVE INVESTORS</p>
-      </div>
-      <div class="reveal" style="transition-delay: 0.1s;">
-        <h2 class="gold-text" style="font-size: 48px;">₦2B+</h2>
-        <p style="font-weight: 700; font-size: 12px; letter-spacing: 1px;">TOTAL PAID OUT</p>
-      </div>
-      <div class="reveal" style="transition-delay: 0.2s;">
-        <h2 class="gold-text" style="font-size: 48px;">99.9%</h2>
-        <p style="font-weight: 700; font-size: 12px; letter-spacing: 1px;">SYSTEM UPTIME</p>
-      </div>
-      <div class="reveal" style="transition-delay: 0.3s;">
-        <h2 class="gold-text" style="font-size: 48px;">24/7</h2>
-        <p style="font-weight: 700; font-size: 12px; letter-spacing: 1px;">LIVE SUPPORT</p>
-      </div>
-    </div>
-  </section>
-
-  <section class="trust-strip">
-    <div class="trust-track">
-      <div class="flex" style="gap: 12px; font-weight: 800; color: var(--muted); font-size: 13px;"><i class="fa-solid fa-shield-check"></i> 256-BIT ENCRYPTION</div>
-      <div class="flex" style="gap: 12px; font-weight: 800; color: var(--muted); font-size: 13px;"><i class="fa-solid fa-lock"></i> FUNDS 100% PROTECTED</div>
-      <div class="flex" style="gap: 12px; font-weight: 800; color: var(--muted); font-size: 13px;"><i class="fa-solid fa-bolt"></i> INSTANT PAYOUTS</div>
-      <div class="flex" style="gap: 12px; font-weight: 800; color: var(--muted); font-size: 13px;"><i class="fa-solid fa-circle-check"></i> VERIFIED PLATFORM</div>
-      <div class="flex" style="gap: 12px; font-weight: 800; color: var(--muted); font-size: 13px;"><i class="fa-solid fa-gift"></i> ₦200k WELCOME BONUS</div>
-      <!-- Duplicate for marquee -->
-      <div class="flex" style="gap: 12px; font-weight: 800; color: var(--muted); font-size: 13px;"><i class="fa-solid fa-shield-check"></i> 256-BIT ENCRYPTION</div>
-      <div class="flex" style="gap: 12px; font-weight: 800; color: var(--muted); font-size: 13px;"><i class="fa-solid fa-lock"></i> FUNDS 100% PROTECTED</div>
-      <div class="flex" style="gap: 12px; font-weight: 800; color: var(--muted); font-size: 13px;"><i class="fa-solid fa-bolt"></i> INSTANT PAYOUTS</div>
-    </div>
-  </section>
-
-  <section style="padding: 120px 0;">
-    <div class="container">
-      <div class="reveal" style="text-align: center; margin-bottom: 80px;">
-        <h2 style="font-size: 42px; margin-bottom: 15px;">How It Works</h2>
-        <p style="font-size: 18px;">Build your wealth in three simple steps.</p>
-      </div>
-      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;">
-        <div class="card reveal">
-          <div style="font-size: 80px; position: absolute; top: -10px; right: 20px; opacity: 0.05; font-weight: 900;">01</div>
-          <div style="width: 70px; height: 70px; background: rgba(26,86,219,0.1); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 30px;"><i class="fa-solid fa-user-plus" style="font-size: 28px; color: var(--blue2);"></i></div>
-          <h3 style="margin-bottom: 15px;">Create Account</h3>
-          <p>Register in seconds and get your ₦200,000 welcome bonus credited to your wallet instantly.</p>
-        </div>
-        <div class="card reveal" style="transition-delay: 0.1s;">
-          <div style="font-size: 80px; position: absolute; top: -10px; right: 20px; opacity: 0.05; font-weight: 900;">02</div>
-          <div style="width: 70px; height: 70px; background: rgba(212,175,55,0.1); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 30px;"><i class="fa-solid fa-wallet" style="font-size: 28px; color: var(--gold);"></i></div>
-          <h3 style="margin-bottom: 15px;">Fund Wallet</h3>
-          <p>Securely fund your investment account via Paystack using your card or bank transfer.</p>
-        </div>
-        <div class="card reveal" style="transition-delay: 0.2s;">
-          <div style="font-size: 80px; position: absolute; top: -10px; right: 20px; opacity: 0.05; font-weight: 900;">03</div>
-          <div style="width: 70px; height: 70px; background: rgba(34,197,94,0.1); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin-bottom: 30px;"><i class="fa-solid fa-chart-line" style="font-size: 28px; color: var(--green);"></i></div>
-          <h3 style="margin-bottom: 15px;">Start Earning</h3>
-          <p>Pick a plan, claim your daily returns every 24 hours, and withdraw your profits instantly.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section style="padding: 120px 0; background: var(--bg2);">
-    <div class="container">
-      <div class="flex" style="justify-content: space-between; align-items: flex-end; margin-bottom: 60px; flex-wrap: wrap; gap: 20px;">
-        <div class="reveal">
-          <h2 style="font-size: 42px; margin-bottom: 12px;">Investment Plans</h2>
-          <p style="font-size: 18px;">Pick a portfolio that suits your goals.</p>
-        </div>
-        <a href="investment-plans.html" class="btn btn-outline">All 10 Plans <i class="fa-solid fa-arrow-right" style="margin-left: 10px;"></i></a>
-      </div>
-      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 30px;">
-        <div class="card reveal">
-          <div class="badge" style="background: rgba(59,130,246,0.1); color: var(--blue2); padding: 5px 12px; border-radius: 50px; font-size: 11px; font-weight: 800; display: inline-block; margin-bottom: 20px;">STARTER LEVEL</div>
-          <h3 style="margin-bottom: 10px;">Starter Plan</h3>
-          <h1 class="grad-text" style="font-size: 54px; margin-bottom: 25px;">15% <small style="font-size: 15px; color: var(--muted2); font-weight: 500;">/ 7 Days</small></h1>
-          <ul class="grid" style="gap: 12px; margin-bottom: 35px; font-size: 15px;">
-            <li><i class="fa-solid fa-check" style="color: var(--green); margin-right: 12px;"></i> Min Deposit: ₦5,000</li>
-            <li><i class="fa-solid fa-check" style="color: var(--green); margin-right: 12px;"></i> Max Deposit: ₦19,999</li>
-            <li><i class="fa-solid fa-check" style="color: var(--green); margin-right: 12px;"></i> Daily Profit Payouts</li>
-          </ul>
-          <a href="register.html" class="btn btn-primary" style="width: 100%;">Get Started</a>
-        </div>
-        <div class="card reveal" style="border-color: var(--gold); transform: scale(1.05); z-index: 10;">
-          <div style="background: var(--gold); color: #000; padding: 5px 12px; border-radius: 50px; font-size: 11px; font-weight: 900; display: inline-block; margin-bottom: 20px; position: absolute; top: 20px; right: 20px;">MOST POPULAR</div>
-          <h3 style="margin-bottom: 10px;">Gold Plan</h3>
-          <h1 class="gold-text" style="font-size: 54px; margin-bottom: 25px;">35% <small style="font-size: 15px; color: var(--muted2); font-weight: 500;">/ 14 Days</small></h1>
-          <ul class="grid" style="gap: 12px; margin-bottom: 35px; font-size: 15px;">
-            <li><i class="fa-solid fa-check" style="color: var(--gold); margin-right: 12px;"></i> Min Deposit: ₦50,000</li>
-            <li><i class="fa-solid fa-check" style="color: var(--gold); margin-right: 12px;"></i> Max Deposit: ₦199,999</li>
-            <li><i class="fa-solid fa-check" style="color: var(--gold); margin-right: 12px;"></i> Priority Support Access</li>
-          </ul>
-          <a href="register.html" class="btn btn-gold" style="width: 100%;">Get Started</a>
-        </div>
-        <div class="card reveal">
-          <div class="badge" style="background: rgba(168,85,247,0.1); color: var(--purple); padding: 5px 12px; border-radius: 50px; font-size: 11px; font-weight: 800; display: inline-block; margin-bottom: 20px;">ELITE LEVEL</div>
-          <h3 style="margin-bottom: 10px;">Platinum Plan</h3>
-          <h1 class="grad-text" style="font-size: 54px; margin-bottom: 25px;">60% <small style="font-size: 15px; color: var(--muted2); font-weight: 500;">/ 30 Days</small></h1>
-          <ul class="grid" style="gap: 12px; margin-bottom: 35px; font-size: 15px;">
-            <li><i class="fa-solid fa-check" style="color: var(--green); margin-right: 12px;"></i> Min Deposit: ₦200,000</li>
-            <li><i class="fa-solid fa-check" style="color: var(--green); margin-right: 12px;"></i> Max Deposit: ₦999,999</li>
-            <li><i class="fa-solid fa-check" style="color: var(--green); margin-right: 12px;"></i> Dedicated Portfolio Agent</li>
-          </ul>
-          <a href="register.html" class="btn btn-primary" style="width: 100%;">Get Started</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section style="padding: 120px 0;">
-    <div class="container">
-      <div class="reveal" style="text-align: center; margin-bottom: 80px;">
-        <h2 style="font-size: 42px; margin-bottom: 15px;">Why Choose BluePay?</h2>
-        <p style="font-size: 18px;">Engineered for security and massive growth.</p>
-      </div>
-      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 30px;">
-        <div class="card reveal">
-          <i class="fa-solid fa-shield-halved" style="font-size: 32px; color: var(--blue2); margin-bottom: 24px;"></i>
-          <h4 style="font-size: 20px; margin-bottom: 12px;">Bank-Grade Security</h4>
-          <p>We use military-grade 256-bit encryption and multi-factor authentication to keep your assets safe.</p>
-        </div>
-        <div class="card reveal" style="transition-delay: 0.1s;">
-          <i class="fa-solid fa-bolt" style="font-size: 32px; color: var(--gold); margin-bottom: 24px;"></i>
-          <h4 style="font-size: 20px; margin-bottom: 12px;">Instant Payouts</h4>
-          <p>Our automated code system ensures withdrawals are processed and sent to your bank within 2 hours.</p>
-        </div>
-        <div class="card reveal" style="transition-delay: 0.2s;">
-          <i class="fa-solid fa-gift" style="font-size: 32px; color: var(--green); margin-bottom: 24px;"></i>
-          <h4 style="font-size: 20px; margin-bottom: 12px;">₦200k Signup Bonus</h4>
-          <p>We empower every new investor with a massive headstart. Use your bonus to start earning today.</p>
-        </div>
-        <div class="card reveal" style="transition-delay: 0.3s;">
-          <i class="fa-solid fa-users" style="font-size: 32px; color: var(--purple); margin-bottom: 24px;"></i>
-          <h4 style="font-size: 20px; margin-bottom: 12px;">Referral Earnings</h4>
-          <p>Earn ₦2,000 for every friend who joins. There is no limit to how much you can earn from referrals.</p>
-        </div>
-        <div class="card reveal" style="transition-delay: 0.4s;">
-          <i class="fa-solid fa-headset" style="font-size: 32px; color: var(--orange); margin-bottom: 24px;"></i>
-          <h4 style="font-size: 20px; margin-bottom: 12px;">24/7 Support Chat</h4>
-          <p>A dedicated personal support agent is assigned to you to handle all your queries in real-time.</p>
-        </div>
-        <div class="card reveal" style="transition-delay: 0.5s;">
-          <i class="fa-solid fa-mobile-screen" style="font-size: 32px; color: var(--blue3); margin-bottom: 24px;"></i>
-          <h4 style="font-size: 20px; margin-bottom: 12px;">Mobile-First Platform</h4>
-          <p>Manage your entire portfolio, fund your wallet, and withdraw profits seamlessly from any mobile device.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section style="padding: 120px 0; background: var(--bg2);">
-    <div class="container">
-      <div class="reveal" style="text-align: center; margin-bottom: 80px;">
-        <h2 style="font-size: 42px;">Investor Success Stories</h2>
-      </div>
-      <div class="testimonial-viewport" id="testimonial-slider">
-        <!-- Script will populate -->
-      </div>
-    </div>
-  </section>
-
-  <section id="faq" style="padding: 120px 0;">
-    <div class="container" style="max-width: 800px;">
-      <div class="reveal" style="text-align: center; margin-bottom: 60px;">
-        <h2 style="font-size: 42px;">Common Questions</h2>
-      </div>
-      <div class="grid reveal" style="gap: 15px;">
-        <div class="faq-item" onclick="toggleFaq(this)">
-          <div class="flex" style="justify-content: space-between; align-items: center;">
-            <h4 style="font-size: 18px;">How do I claim my ₦200,000 bonus?</h4>
-            <i class="fa-solid fa-plus"></i>
-          </div>
-          <div class="faq-ans">The bonus is automatically credited to your wallet balance once your registration is complete and your email is verified.</div>
-        </div>
-        <div class="faq-item" onclick="toggleFaq(this)">
-          <div class="flex" style="justify-content: space-between; align-items: center;">
-            <h4 style="font-size: 18px;">Is my money safe on BluePay?</h4>
-            <i class="fa-solid fa-plus"></i>
-          </div>
-          <div class="faq-ans">Yes. We use bank-grade security, end-to-end encryption, and multi-signature cold storage for all digital assets and user funds.</div>
-        </div>
-        <div class="faq-item" onclick="toggleFaq(this)">
-          <div class="flex" style="justify-content: space-between; align-items: center;">
-            <h4 style="font-size: 18px;">Can I have multiple investments?</h4>
-            <i class="fa-solid fa-plus"></i>
-          </div>
-          <div class="faq-ans">Absolutely. You can invest in as many plans as you like at the same time to maximize your daily returns.</div>
-        </div>
-        <div class="faq-item" onclick="toggleFaq(this)">
-          <div class="flex" style="justify-content: space-between; align-items: center;">
-            <h4 style="font-size: 18px;">How does the withdrawal code work?</h4>
-            <i class="fa-solid fa-plus"></i>
-          </div>
-          <div class="faq-ans">Before withdrawing, you purchase a secure code from the platform. This code validates your request and prevents unauthorized withdrawals from your account.</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section style="padding: 100px 0;">
-    <div class="container">
-      <div class="card reveal" style="background: linear-gradient(135deg, var(--bg2), var(--bg4)); padding: 100px 40px; text-align: center; border-color: var(--blue2);">
-        <h2 style="font-size: clamp(32px, 5vw, 56px); margin-bottom: 25px;">Ready to start building real wealth?</h2>
-        <p style="font-size: 20px; margin-bottom: 45px;">Join 50,000+ Nigerians and claim your ₦200,000 welcome bonus now.</p>
-        <div class="flex" style="justify-content: center; gap: 20px; flex-wrap: wrap;">
-          <a href="register.html" class="btn btn-primary" style="padding: 20px 50px;">Create Free Account</a>
-          <a href="login.html" class="btn btn-outline" style="padding: 20px 50px;">Access My Dashboard</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <footer style="padding: 100px 0 60px; border-top: 1px solid var(--border); background: var(--bg);">
-    <div class="container grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 60px; margin-bottom: 80px;">
-      <div>
-        <div class="flex" style="gap: 12px; margin-bottom: 30px; align-items: center;">
-          <div style="width: 40px; height: 40px; background: var(--blue); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-            <i class="fa-solid fa-b" style="color: white; font-size: 20px;"></i>
-          </div>
-          <span style="font-size: 24px; font-weight: 900;">BluePay</span>
-        </div>
-        <p style="font-size: 15px; line-height: 1.8;">The premium standard for digital investments in Nigeria. Secure, transparent, and profitable.</p>
-        <div class="flex" style="gap: 15px; margin-top: 30px;">
-          <a href="#"><i class="fa-brands fa-whatsapp" style="font-size: 22px;"></i></a>
-          <a href="#"><i class="fa-brands fa-x-twitter" style="font-size: 22px;"></i></a>
-          <a href="#"><i class="fa-brands fa-instagram" style="font-size: 22px;"></i></a>
-        </div>
-      </div>
-      <div>
-        <h4 style="margin-bottom: 25px; font-size: 18px;">Quick Links</h4>
-        <ul class="grid" style="gap: 12px; font-size: 15px;">
-          <li><a href="investment-plans.html">Investment Plans</a></li>
-          <li><a href="leaderboard.html">Top Investors</a></li>
-          <li><a href="support.html">Live Chat Support</a></li>
-          <li><a href="referrals.html">Referral Programme</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 style="margin-bottom: 25px; font-size: 18px;">Account</h4>
-        <ul class="grid" style="gap: 12px; font-size: 15px;">
-          <li><a href="dashboard.html">Dashboard</a></li>
-          <li><a href="deposit.html">Add Funds</a></li>
-          <li><a href="withdraw.html">Withdraw Profits</a></li>
-          <li><a href="profile.html">My Profile</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 style="margin-bottom: 25px; font-size: 18px;">Legal</h4>
-        <ul class="grid" style="gap: 12px; font-size: 15px;">
-          <li><a href="terms.html">Terms of Service</a></li>
-          <li><a href="privacy.html">Privacy Policy</a></li>
-          <li><a href="kyc.html">KYC Guidelines</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="container" style="border-top: 1px solid var(--border); padding-top: 50px; text-align: center;">
-      <p style="font-size: 13px; color: var(--muted);">© 2024 BluePay Fintech Limited. RC 1294837. All rights reserved.</p>
-    </div>
-  </footer>
-
-  <script src="app.js" type="module"></script>
-  <script type="module">
-    import { TESTIMONIALS } from './firebase-config.js';
-
-    // Navbar Scroll
-    window.onscroll = () => {
-      const nav = document.getElementById('main-nav');
-      if (window.scrollY > 50) nav.classList.add('scrolled');
-      else nav.classList.remove('scrolled');
-    };
-
-    // Mobile Menu
-    window.toggleMenu = (show) => {
-      document.getElementById('mobile-menu').style.display = show ? 'flex' : 'none';
-      document.body.style.overflow = show ? 'hidden' : 'auto';
-    };
-
-    // FAQ
-    window.toggleFaq = (el) => {
-      const active = el.classList.contains('active');
-      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
-      if(!active) el.classList.add('active');
-    };
-
-    // Testimonials Engine
-    const slider = document.getElementById('testimonial-slider');
-    slider.innerHTML = TESTIMONIALS.map((t, i) => `
-      <div class="testimonial-slide ${i === 0 ? 'active' : ''}" id="t-${i}">
-        <div class="card" style="max-width: 800px; margin: 0 auto; text-align: center; border-color: var(--borderb);">
-          <i class="fa-solid fa-quote-left" style="font-size: 50px; color: var(--border); margin-bottom: 30px;"></i>
-          <p style="font-size: 22px; font-weight: 500; line-height: 1.6; color: var(--text); margin-bottom: 40px;">"${t.text}"</p>
-          <div class="flex" style="justify-content: center; align-items: center; gap: 15px;">
-            <div style="width: 55px; height: 55px; border-radius: 50%; background: ${t.color}; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px;">${t.init}</div>
-            <div style="text-align: left;">
-              <h4 style="font-size: 18px; color: var(--text);">${t.name}</h4>
-              <p style="font-size: 13px;">${t.loc}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    `).join('');
-
-    let currentT = 0;
-    setInterval(() => {
-      document.getElementById(`t-${currentT}`).classList.remove('active');
-      currentT = (currentT + 1) % TESTIMONIALS.length;
-      document.getElementById(`t-${currentT}`).classList.add('active');
-    }, 8000);
-
-    // Reveal Logic
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('revealed'); });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-    // Loader Safe-Hide
-    window.onload = () => {
-      const l = document.getElementById('global-loader');
-      l.style.opacity = '0';
-      setTimeout(() => { l.style.display = 'none'; }, 600);
-    };
-  </script>
+    <script src="app.js" type="module"></script>
 </body>
 </html>
