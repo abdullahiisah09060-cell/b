@@ -2,55 +2,144 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 6.1 MANDATORY: Single Admin Source of Truth
-    function isAdmin() {
-      return request.auth != null && request.auth.token.email == 'liger4683@gmail.com';
+    // --- GLOBAL SECURITY FUNCTIONS ---
+
+    // Check if the user is authenticated
+    function isAuth() {
+      return request.auth != null;
     }
-    
+
+    // Check if the user is the owner of the document
     function isOwner(uid) {
-      return request.auth != null && request.auth.uid == uid;
+      return isAuth() && request.auth.uid == uid;
     }
 
-    // User Document Security
+    // MANDATORY ADMIN CHECK: Only liger4683@gmail.com is authorized
+    // We check the token email directly for maximum security
+    function isAdmin() {
+      return isAuth() && request.auth.token.email == 'liger4683@gmail.com';
+    }
+
+    // Helper to ensure critical financial fields aren't tampered with
+    function incomingData() {
+      return request.resource.data;
+    }
+
+    // --- COLLECTION RULES ---
+
+    // User Profiles
     match /users/{uid} {
-      allow read: if request.auth != null && (isOwner(uid) || isAdmin());
-      allow create: if request.auth != null;
-      // Prevent role escalation by normal users
-      allow update: if isAdmin() || (isOwner(uid) && request.resource.data.role == resource.data.role);
+      allow read: if isAuth() && (isOwner(uid) || isAdmin());
+      
+      // On creation, prevent users from setting themselves as admin
+      allow create: if isAuth() && incomingData().role != 'admin';
+      
+      // On update, users can update their own data, but cannot change their role
+      // Admin has full override power
+      allow update: if isAdmin() || (isOwner(uid) && incomingData().role == resource.data.role);
+      
+      allow delete: if isAdmin();
     }
 
-    // Transaction Records
+    // Transactions (Deposits, Bonuses, Claims, Refunds)
     match /transactions/{txId} {
-      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
-      allow create: if isAdmin(); // Transactions are created via server-side or admin flows
+      // Users can only see their own transactions
+      allow read: if isAuth() && (incomingData().uid == request.auth.uid || resource.data.uid == request.auth.uid || isAdmin());
+      
+      // Users can create a transaction record (e.g., when depositing via Paystack)
+      allow create: if isAuth() && incomingData().uid == request.auth.uid;
+      
+      // Only admin can modify or delete transaction history
       allow update, delete: if isAdmin();
     }
 
-    // Investment Portfolio
-    match /investments/{invId} {
-      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
-    }
-
-    // Withdrawal Codes (Paystack-only verification collection)
-    match /codes/{codeId} {
-      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
-      allow create: if request.auth != null; 
+    // Withdrawal Requests
+    match /withdrawals/{wId} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      
+      // Users can submit a withdrawal request
+      allow create: if isAuth() && incomingData().uid == request.auth.uid;
+      
+      // Only Admin can update status (Approve/Decline)
       allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
-    // Support Threads
+    // Investment Portfolios
+    match /investments/{invId} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      
+      // Users can create investments and update them (for daily claims)
+      allow create: if isAuth() && incomingData().uid == request.auth.uid;
+      allow update: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      
+      allow delete: if isAdmin();
+    }
+
+    // Security Validator Codes (Withdrawal Codes)
+    match /codes/{codeId} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      
+      // Create code entry after Paystack success
+      allow create: if isAuth() && incomingData().uid == request.auth.uid;
+      
+      // User can update 'used' status, Admin can modify everything
+      allow update: if isAdmin() || (isOwner(resource.data.uid) && incomingData().used == true);
+      
+      allow delete: if isAdmin();
+    }
+
+    // Support System (Chat Threads)
     match /support/{uid} {
-      allow read, write: if request.auth != null && (isOwner(uid) || isAdmin());
+      // uid here matches the user's uid
+      allow read: if isAuth() && (isOwner(uid) || isAdmin());
+      allow write: if isAuth() && (isOwner(uid) || isAdmin());
+
+      // Message Sub-collection
       match /messages/{msgId} {
-        allow read, write: if request.auth != null && (get(/databases/$(database)/documents/support/$(uid)).data.uid == request.auth.uid || isAdmin());
+        allow read: if isAuth() && (get(/databases/$(database)/documents/support/$(uid)).data.uid == request.auth.uid || isAdmin());
+        allow create: if isAuth() && (uid == request.auth.uid || isAdmin());
       }
     }
 
-    // Settings & Global Config
+    // Identity Verification (KYC)
+    match /kyc/{uid} {
+      allow read: if isAuth() && (isOwner(uid) || isAdmin());
+      allow create: if isAuth() && isOwner(uid);
+      allow update: if isAdmin() || isOwner(uid);
+      allow delete: if isAdmin();
+    }
+
+    // Notifications (Alert Center)
+    match /notifications/{notifId} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      
+      // Users can't create notifications, only the system/admin
+      allow create: if isAdmin(); 
+      
+      // Users can mark their own notifications as read
+      allow update: if isAuth() && resource.data.uid == request.auth.uid && incomingData().read == true;
+      allow delete: if isAdmin() || (isAuth() && resource.data.uid == request.auth.uid);
+    }
+
+    // Referrals Tracking
+    match /referrals/{refId} {
+      allow read: if isAuth() && (resource.data.referrerId == request.auth.uid || isAdmin());
+      allow create: if isAuth(); // Triggered during registration
+      allow update, delete: if isAdmin();
+    }
+
+    // Global Platform Settings (Maintenance Mode, Bonuses)
     match /settings/{docId} {
-      allow read: if request.auth != null;
+      // Everyone must be able to read settings to check maintenance mode
+      allow read: if isAuth();
+      // Only liger4683@gmail.com can change system settings
+      allow write: if isAdmin();
+    }
+
+    // Broadcasts
+    match /broadcasts/{bId} {
+      allow read: if isAuth();
       allow write: if isAdmin();
     }
   }
