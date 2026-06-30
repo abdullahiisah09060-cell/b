@@ -1,75 +1,91 @@
-/* components.js - Shared UI Engine */
-import { toast } from './firebase-config.js';
+/* 
+ * BluePay Components Engine
+ * Handles Navigation, Modals, and Reusable UI Parts
+ */
+
+import { auth, ADMIN_EMAIL } from './firebase-config.js';
 
 /**
- * Replaces native confirm() with a branded BluePay modal
+ * Injects navigation based on device and user role
  */
-export function confirmModal({ title, message, confirmText = "Proceed", cancelText = "Cancel" }) {
-  return new Promise((resolve) => {
-    const existing = document.getElementById('global-confirm-modal');
-    if (existing) existing.remove();
+export function initNavigation(activeId = 'dashboard') {
+    const sidebar = document.querySelector('.sidebar');
+    const bottomNav = document.querySelector('.bottom-nav');
+    const mobileHeader = document.querySelector('.mobile-header');
 
+    const links = [
+        { id: 'dashboard', icon: 'fa-house', label: 'Home', url: 'dashboard.html' },
+        { id: 'invest', icon: 'fa-chart-line', label: 'Invest', url: 'invest.html' },
+        { id: 'withdraw', icon: 'fa-bank', label: 'Withdraw', url: 'withdraw.html' },
+        { id: 'support', icon: 'fa-headset', label: 'Support', url: 'support.html' },
+        { id: 'profile', icon: 'fa-user-circle', label: 'Account', url: 'profile.html' }
+    ];
+
+    // Sidebar Injection (Desktop)
+    if (sidebar) {
+        sidebar.innerHTML = `
+            <div class="flex" style="gap: 12px; margin-bottom: 40px;">
+                <div style="width: 35px; height: 35px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white;"></i></div>
+                <span style="font-size: 22px; font-weight: 900;">BluePay</span>
+            </div>
+            <nav style="flex: 1;">
+                ${links.map(l => `
+                    <a href="${l.url}" class="nav-item ${activeId === l.id ? 'active' : ''}" style="display:flex; align-items:center; gap:15px; padding:14px 18px; border-radius:10px; color:var(--muted2); font-weight:600; text-decoration:none; margin-bottom:5px;">
+                        <i class="fa-solid ${l.icon}" style="width:20px; text-align:center;"></i> ${l.label}
+                    </a>
+                `).join('')}
+                <a href="transactions.html" class="nav-item"><i class="fa-solid fa-list-ul"></i> History</a>
+                <a href="referrals.html" class="nav-item"><i class="fa-solid fa-users"></i> Referrals</a>
+            </nav>
+            <div style="padding-top: 20px; border-top: 1px solid var(--border);">
+                <button id="logout-btn" style="background:none; border:none; color:var(--red); font-weight:700; cursor:pointer; display:flex; align-items:center; gap:15px; padding:10px 18px;">
+                    <i class="fa-solid fa-right-from-bracket"></i> Logout
+                </button>
+            </div>
+        `;
+    }
+
+    // Bottom Nav Injection (Mobile)
+    if (bottomNav) {
+        bottomNav.innerHTML = links.map(l => `
+            <a href="${l.url}" class="b-nav-item ${activeId === l.id ? 'active' : ''}" style="display:flex; flex-direction:column; align-items:center; gap:4px; color:${activeId === l.id ? 'var(--blue2)' : 'var(--muted2)'}; text-decoration:none; font-size:10px; font-weight:700;">
+                <i class="fa-solid ${l.icon}" style="font-size:20px;"></i>
+                <span>${l.label}</span>
+            </a>
+        `).join('');
+    }
+
+    // Setup Logout
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.onclick = () => auth.signOut().then(() => window.location.href = 'login.html');
+    }
+}
+
+/**
+ * Custom Confirmation Modal (Replaces native confirm)
+ */
+export function showConfirm({ title, message, onConfirm }) {
     const overlay = document.createElement('div');
-    overlay.id = 'global-confirm-modal';
     overlay.className = 'modal-overlay';
     overlay.style.display = 'flex';
     
     overlay.innerHTML = `
-      <div class="modal-content">
-        <h3 style="margin-bottom: 12px; font-size: 20px;">${title}</h3>
-        <p style="color: var(--muted2); margin-bottom: 24px; font-size: 14px;">${message}</p>
-        <div class="flex" style="gap: 12px; justify-content: flex-end;">
-          <button class="btn btn-outline" id="modal-cancel" style="padding: 10px 20px; font-size: 14px;">${cancelText}</button>
-          <button class="btn btn-primary" id="modal-confirm" style="padding: 10px 20px; font-size: 14px;">${confirmText}</button>
+        <div class="modal-content">
+            <h3>${title}</h3>
+            <p style="margin: 15px 0 30px; color: var(--muted2); font-size: 14px;">${message}</p>
+            <div class="grid-2">
+                <button class="btn btn-outline" id="m-cancel">Cancel</button>
+                <button class="btn btn-primary" id="m-ok">Proceed</button>
+            </div>
         </div>
-      </div>
     `;
-
+    
     document.body.appendChild(overlay);
-
-    document.getElementById('modal-cancel').onclick = () => { overlay.remove(); resolve(false); };
-    document.getElementById('modal-confirm').onclick = () => { overlay.remove(); resolve(true); };
-    overlay.onclick = (e) => { if (e.target === overlay) { overlay.remove(); resolve(false); } };
-  });
-}
-
-/**
- * Global Loading State Manager
- */
-export function toggleLoader(show, button = null) {
-  const loader = document.getElementById('global-loader');
-  if (loader) {
-    loader.style.display = show ? 'flex' : 'none';
-    loader.style.opacity = show ? '1' : '0';
-  }
-  if (button) {
-    if (show) {
-      button.disabled = true;
-      button.dataset.oldText = button.innerHTML;
-      button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
-    } else {
-      button.disabled = false;
-      button.innerHTML = button.dataset.oldText || button.innerHTML;
-    }
-  }
-}
-
-/**
- * Standardized Input Validation Feedback
- */
-export function showInputError(inputEl, message) {
-  const group = inputEl.closest('.auth-input-group');
-  let errorEl = group.querySelector('.error-msg');
-  if (!errorEl) {
-    errorEl = document.createElement('p');
-    errorEl.className = 'error-msg';
-    errorEl.style.cssText = 'color: var(--red); font-size: 11px; margin-top: 5px; font-weight: 700;';
-    group.appendChild(errorEl);
-  }
-  errorEl.innerText = message;
-  inputEl.style.borderColor = 'var(--red)';
-  setTimeout(() => {
-    errorEl.innerText = '';
-    inputEl.style.borderColor = '';
-  }, 5000);
+    
+    document.getElementById('m-cancel').onclick = () => overlay.remove();
+    document.getElementById('m-ok').onclick = () => {
+        onConfirm();
+        overlay.remove();
+    };
 }
