@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 6.1 MANDATORY ADMIN IDENTITY: Single source of truth
+    // 6.1 MANDATORY: Single Admin Source of Truth
     function isAdmin() {
       return request.auth != null && request.auth.token.email == 'liger4683@gmail.com';
     }
@@ -11,35 +11,47 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == uid;
     }
 
+    // User Document Security
     match /users/{uid} {
       allow read: if request.auth != null && (isOwner(uid) || isAdmin());
-      // Prevent role escalation: users can't set their own role to admin
-      allow create: if request.auth != null && request.resource.data.role != 'admin';
+      allow create: if request.auth != null;
+      // Prevent role escalation by normal users
       allow update: if isAdmin() || (isOwner(uid) && request.resource.data.role == resource.data.role);
     }
 
-    match /admin_only_logs/{doc} {
-      allow read, write: if isAdmin();
+    // Transaction Records
+    match /transactions/{txId} {
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAdmin(); // Transactions are created via server-side or admin flows
+      allow update, delete: if isAdmin();
     }
 
-    // Withdrawal Codes: Paystack-only verification
+    // Investment Portfolio
+    match /investments/{invId} {
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+    // Withdrawal Codes (Paystack-only verification collection)
     match /codes/{codeId} {
       allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
-      // Create only allowed via system (Paystack logic)
       allow create: if request.auth != null; 
-      allow update: if isAdmin() || (isOwner(resource.data.uid) && request.resource.data.used == true);
+      allow update: if isAdmin();
     }
 
-    // Global Settings
-    match /settings/global {
+    // Support Threads
+    match /support/{uid} {
+      allow read, write: if request.auth != null && (isOwner(uid) || isAdmin());
+      match /messages/{msgId} {
+        allow read, write: if request.auth != null && (get(/databases/$(database)/documents/support/$(uid)).data.uid == request.auth.uid || isAdmin());
+      }
+    }
+
+    // Settings & Global Config
+    match /settings/{docId} {
       allow read: if request.auth != null;
       allow write: if isAdmin();
-    }
-
-    // Generic protections for all other collections
-    match /{collection}/{doc} {
-      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
-      allow write: if isAdmin() || (request.auth != null && request.resource.data.uid == request.auth.uid);
     }
   }
 }
