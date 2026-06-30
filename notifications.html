@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications — BluePay</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    .layout-wrapper { display: flex; min-height: 100vh; }
+    .sidebar { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); padding: 30px 20px; position: fixed; height: 100vh; display: flex; flex-direction: column; z-index: 100; }
+    .main-content { flex: 1; margin-left: 260px; padding: 40px; }
+    .nav-item { display: flex; align-items: center; gap: 15px; padding: 14px 18px; border-radius: var(--radius-s); color: var(--muted2); font-weight: 600; margin-bottom: 5px; }
+    
+    .notif-card { background: var(--bg2); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 15px; position: relative; transition: 0.3s; cursor: pointer; }
+    .notif-card.unread { border-left: 4px solid var(--blue2); background: var(--bg3); }
+    .notif-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    @media (max-width: 992px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 100px 20px 100px; }
+    }
+  </style>
+</head>
+<body data-page="notifications">
+  <div id="global-loader"><div class="spinner"></div></div>
+
+  <div class="layout-wrapper">
+    <aside class="sidebar">
+      <div class="flex" style="gap: 12px; margin-bottom: 40px; padding-left: 10px;">
+        <div style="width: 35px; height: 35px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white;"></i></div>
+        <span style="font-size: 22px; font-weight: 900;">BluePay</span>
+      </div>
+      <nav style="flex: 1;">
+        <a href="dashboard.html" class="nav-item"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="notifications.html" class="nav-item active"><i class="fa-solid fa-bell"></i> Notifications</a>
+        <a href="profile.html" class="nav-item"><i class="fa-solid fa-user-circle"></i> Profile</a>
+      </nav>
+      <div style="padding-top: 20px; border-top: 1px solid var(--border);">
+        <a href="#" data-logout class="nav-item" style="color: var(--red);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="flex-between reveal" style="margin-bottom: 40px;">
+        <div>
+          <h1 style="font-size: 28px; margin-bottom: 5px;">Inbox</h1>
+          <p>Real-time system updates and alerts.</p>
+        </div>
+        <button id="mark-all-btn" class="btn btn-outline" style="padding: 10px 20px; font-size: 13px;">Mark all as read</button>
+      </div>
+
+      <div id="notif-list" class="reveal">
+        <div class="skeleton" style="height: 80px; margin-bottom: 15px;"></div>
+        <div class="skeleton" style="height: 80px; margin-bottom: 15px;"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js" type="module"></script>
+  <script type="module">
+    import { auth, listenNotifs, markRead, markAllRead, timeAgo, requireAuth } from './firebase-config.js';
+
+    requireAuth((user) => {
+      listenNotifs(user.uid, (data) => {
+        const list = document.getElementById('notif-list');
+        if (data.length === 0) {
+          list.innerHTML = `<div style="text-align: center; padding: 100px 0;"><i class="fa-solid fa-bell-slash" style="font-size: 50px; color: var(--border); margin-bottom: 20px;"></i><p>Inbox is empty.</p></div>`;
+          return;
+        }
+
+        list.innerHTML = data.map(n => {
+          let icon = "fa-info-circle", color = "var(--blue2)", bg = "rgba(59,130,246,0.1)";
+          if (n.type === "success") { icon = "fa-circle-check"; color = "var(--green)"; bg = "rgba(34,197,94,0.1)"; }
+          if (n.type === "warning") { icon = "fa-triangle-exclamation"; color = "var(--orange)"; bg = "rgba(245,158,11,0.1)"; }
+          if (n.type === "error") { icon = "fa-circle-xmark"; color = "var(--red)"; bg = "rgba(239,68,68,0.1)"; }
+
+          return `
+            <div class="notif-card ${n.read ? '' : 'unread'}" onclick="handleRead('${n.id}', ${n.read})">
+              <div class="flex" style="gap: 20px; align-items: flex-start;">
+                <div class="notif-icon" style="background: ${bg}; color: ${color};"><i class="fa-solid ${icon}"></i></div>
+                <div style="flex: 1;">
+                  <h4 style="font-size: 15px; margin-bottom: 5px;">${n.title}</h4>
+                  <p style="font-size: 14px; color: var(--muted2); line-height: 1.5;">${n.message}</p>
+                  <p style="font-size: 11px; margin-top: 10px; color: var(--muted); font-weight: 700;">${timeAgo(n.createdAt)}</p>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      });
+
+      window.handleRead = (id, alreadyRead) => {
+        if (!alreadyRead) markRead(id);
+      };
+
+      document.getElementById('mark-all-btn').onclick = () => markAllRead(user.uid);
+
+      setTimeout(() => { document.getElementById('global-loader').style.display = 'none'; }, 600);
+    });
+  </script>
+</body>
+</html>

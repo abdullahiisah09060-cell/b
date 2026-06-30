@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to BluePay 🎉</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body data-page="welcome">
+  <div id="global-loader"><div class="spinner"></div></div>
+  <div class="auth-page" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div class="card reveal" style="width: 100%; max-width: 500px; text-align: center; padding: 60px 40px;">
+      <div style="width: 100px; height: 100px; background: var(--green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 35px; font-size: 50px; box-shadow: 0 0 40px rgba(34,197,94,0.3);">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <h2 id="welcome-title" style="font-size: 32px; margin-bottom: 12px;">Welcome, Investor!</h2>
+      <p style="margin-bottom: 45px;">Your digital portfolio is ready. We've credited your wallet with your signup bonus.</p>
+      
+      <div style="background: rgba(26,86,219,0.1); border: 1px solid var(--borderb); padding: 40px 20px; border-radius: 20px; margin-bottom: 45px;">
+        <p style="font-size: 12px; font-weight: 800; color: var(--muted2); text-transform: uppercase; margin-bottom: 10px;">Available Balance</p>
+        <h1 id="welcome-bonus" class="grad-text" style="font-size: 56px;">₦200,000</h1>
+      </div>
+
+      <button id="go-dash-btn" class="btn btn-primary" style="width: 100%;">Go to Dashboard</button>
+      <p id="welcome-countdown" style="margin-top: 20px; font-size: 13px; color: var(--muted);">Redirecting in 5s...</p>
+    </div>
+  </div>
+  <script src="auth.js" type="module"></script>
+  <script type="module">
+    window.onload = () => { document.getElementById('global-loader').style.display = 'none'; };
+  </script>
+</body>
+</html>

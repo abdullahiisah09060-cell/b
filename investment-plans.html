@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BluePay — Investment Plans</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* Navbar styles same as index */
+    nav { position: fixed; top: 0; width: 100%; z-index: 1000; padding: 25px 0; background: rgba(6, 8, 15, 0.95); backdrop-filter: blur(15px); border-bottom: 1px solid var(--border); }
+    .hero-sec { padding: 180px 0 80px; text-align: center; }
+    
+    .plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-top: 60px; }
+    .comp-table { width: 100%; border-collapse: collapse; background: var(--bg2); border-radius: 20px; overflow: hidden; margin-top: 80px; }
+    .comp-table th, .comp-table td { padding: 20px; text-align: left; border-bottom: 1px solid var(--border); }
+    .comp-table th { background: var(--bg3); font-size: 14px; font-weight: 800; }
+
+    @media (max-width: 768px) {
+      .comp-table { display: block; overflow-x: auto; }
+    }
+  </style>
+</head>
+<body data-page="public-plans">
+  <div id="global-loader"><div class="spinner"></div></div>
+
+  <nav>
+    <div class="container flex" style="justify-content: space-between; align-items: center;">
+      <a href="index.html" class="flex" style="gap: 12px;">
+        <div style="width: 38px; height: 38px; background: var(--blue); border-radius: 10px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white; font-size: 18px;"></i></div>
+        <span style="font-size: 22px; font-weight: 900;">BluePay</span>
+      </a>
+      <div class="flex" style="gap: 15px;">
+        <a href="login.html" class="btn btn-outline" style="padding: 10px 20px;">Sign In</a>
+        <a href="register.html" class="btn btn-primary" style="padding: 10px 20px;">Get Started</a>
+      </div>
+    </div>
+  </nav>
+
+  <section class="hero-sec container">
+    <h1 style="font-size: 52px; margin-bottom: 20px;">Premium Plans for <span class="grad-text">Every Goal.</span></h1>
+    <p style="font-size: 18px; max-width: 600px; margin: 0 auto;">From entry-level savings to high-yield elite portfolios, our 10 specialized plans are built to deliver consistent returns.</p>
+  </section>
+
+  <section class="container" style="padding-bottom: 100px;">
+    <!-- Calculator -->
+    <div class="card reveal" style="max-width: 800px; margin: 0 auto; background: var(--bg2); border-color: var(--blue2);">
+      <h3 style="text-align: center; margin-bottom: 30px;">ROI Performance Calculator</h3>
+      <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 25px;">
+        <div>
+          <label style="display:block; font-size: 12px; font-weight: 800; color: var(--muted2); margin-bottom: 10px;">I WANT TO INVEST</label>
+          <input type="number" id="calc-amt" value="50000" style="width: 100%; background: var(--bg3); border: 1px solid var(--border); padding: 15px; border-radius: 10px; color: var(--text); font-weight: 800; font-size: 18px;">
+        </div>
+        <div>
+          <label style="display:block; font-size: 12px; font-weight: 800; color: var(--muted2); margin-bottom: 10px;">SELECT PLAN</label>
+          <select id="calc-plan" style="width: 100%; background: var(--bg3); border: 1px solid var(--border); padding: 15px; border-radius: 10px; color: var(--text); font-weight: 800; font-size: 16px;">
+            <!-- Options added by JS -->
+          </select>
+        </div>
+      </div>
+      <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 40px; text-align: center;">
+        <div><p style="font-size: 11px; font-weight: 700;">DAILY RETURNS</p><h2 id="res-daily" style="color: var(--green);">₦0</h2></div>
+        <div><p style="font-size: 11px; font-weight: 700;">TOTAL PROFIT</p><h2 id="res-profit" style="color: var(--blue2);">₦0</h2></div>
+        <div><p style="font-size: 11px; font-weight: 700;">FINAL PAYOUT</p><h2 id="res-total" style="color: var(--gold);">₦0</h2></div>
+      </div>
+    </div>
+
+    <!-- Plans Display -->
+    <div id="plans-display" class="plan-grid">
+      <!-- 10 Plans injected here -->
+    </div>
+
+    <!-- Comparison Table -->
+    <table class="comp-table reveal">
+      <thead>
+        <tr>
+          <th>PLAN NAME</th>
+          <th>ROI (%)</th>
+          <th>DURATION</th>
+          <th>MIN (₦)</th>
+          <th>MAX (₦)</th>
+          <th>DAILY RETURN</th>
+        </tr>
+      </thead>
+      <tbody id="comp-body"></tbody>
+    </table>
+  </section>
+
+  <footer style="padding: 60px 0; border-top: 1px solid var(--border); text-align: center;">
+    <p style="color: var(--muted2); font-size: 14px;">© 2024 BluePay Technologies. All rates are subject to performance guidelines.</p>
+  </footer>
+
+  <script src="app.js" type="module"></script>
+  <script type="module">
+    import { INVESTMENT_PLANS, fmtN } from './firebase-config.js';
+
+    const calcAmt = document.getElementById('calc-amt');
+    const calcPlan = document.getElementById('calc-plan');
+    const plansDisplay = document.getElementById('plans-display');
+
+    // Populate Selector & Grid
+    calcPlan.innerHTML = INVESTMENT_PLANS.map(p => `<option value="${p.id}">${p.name} (${p.roiPercent}%)</option>`).join('');
+    
+    plansDisplay.innerHTML = INVESTMENT_PLANS.map(p => `
+      <div class="card reveal" style="${p.roiPercent >= 35 ? 'border-color: var(--goldd);' : ''}">
+        <h3 style="font-size: 22px;">${p.name} Plan</h3>
+        <h1 class="${p.roiPercent >= 35 ? 'gold-text' : 'grad-text'}" style="font-size: 44px; margin: 20px 0;">${p.roiPercent}%</h1>
+        <div class="flex-between" style="margin-bottom: 12px; font-weight: 700;"><span>Duration</span><span>${p.durationDays} Days</span></div>
+        <div class="flex-between" style="margin-bottom: 25px; font-weight: 700;"><span>Min Entry</span><span>${fmtN(p.min)}</span></div>
+        <a href="register.html" class="btn btn-primary" style="width: 100%;">Invest with ₦200k Bonus</a>
+      </div>
+    `).join('');
+
+    document.getElementById('comp-body').innerHTML = INVESTMENT_PLANS.map(p => `
+      <tr>
+        <td style="font-weight: 800;">${p.name}</td>
+        <td style="color: var(--green); font-weight: 800;">${p.roiPercent}%</td>
+        <td>${p.durationDays} Days</td>
+        <td>${fmtN(p.min)}</td>
+        <td>${p.max === Infinity ? '∞' : fmtN(p.max)}</td>
+        <td style="font-weight: 800;">${((p.roiPercent/100)/p.durationDays * 100).toFixed(2)}%</td>
+      </tr>
+    `).join('');
+
+    const runCalc = () => {
+      const p = INVESTMENT_PLANS.find(p => p.id === calcPlan.value);
+      const amt = parseFloat(calcAmt.value) || 0;
+      const profit = amt * (p.roiPercent / 100);
+      document.getElementById('res-daily').innerText = fmtN(profit / p.durationDays);
+      document.getElementById('res-profit').innerText = fmtN(profit);
+      document.getElementById('res-total').innerText = fmtN(amt + profit);
+    };
+
+    calcAmt.oninput = runCalc;
+    calcPlan.onchange = runCalc;
+    runCalc();
+
+    setTimeout(() => { document.getElementById('global-loader').style.display = 'none'; }, 600);
+  </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Email — BluePay</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
+    .bounce-icon { animation: bounce 3s ease-in-out infinite; font-size: 70px; color: var(--blue2); margin-bottom: 40px; }
+  </style>
+</head>
+<body data-page="verify">
+  <div id="global-loader"><div class="spinner"></div></div>
+  <div class="auth-page" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
+    <div class="card reveal" style="width: 100%; max-width: 480px; text-align: center; padding: 60px 40px;">
+      <i class="fa-solid fa-envelope-open-text bounce-icon"></i>
+      <h2 style="margin-bottom: 15px;">Check your email</h2>
+      <p style="margin-bottom: 10px;">We've sent a verification link to:</p>
+      <div id="user-verify-email" style="font-weight: 900; color: var(--text); font-size: 19px; margin-bottom: 35px;">...</div>
+      
+      <div style="background: var(--bg3); padding: 20px; border-radius: 15px; border: 1px solid var(--border); margin-bottom: 40px;">
+        <div style="display: flex; gap: 12px; justify-content: center; align-items: center; font-size: 14px; font-weight: 700; color: var(--muted2);">
+          <div class="spinner" style="width: 18px; height: 18px; border-width: 2px;"></div>
+          Waiting for verification...
+        </div>
+      </div>
+
+      <button id="resend-btn" class="btn btn-outline" style="width: 100%; margin-bottom: 25px;">Resend Verification Link</button>
+      <a href="#" data-logout style="color: var(--red); font-weight: 800; font-size: 13px;">Wrong email? Sign Out</a>
+    </div>
+  </div>
+  <script src="auth.js" type="module"></script>
+  <script type="module">
+    window.onload = () => { document.getElementById('global-loader').style.display = 'none'; };
+  </script>
+</body>
+</html>

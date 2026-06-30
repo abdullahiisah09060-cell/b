@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fund Wallet — BluePay</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* Reuse Sidebar/Layout from Dashboard */
+    .layout-wrapper { display: flex; min-height: 100vh; }
+    .sidebar { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); padding: 30px 20px; position: fixed; height: 100vh; display: flex; flex-direction: column; z-index: 100; }
+    .main-content { flex: 1; margin-left: 260px; padding: 40px; }
+    .nav-item { display: flex; align-items: center; gap: 15px; padding: 14px 18px; border-radius: var(--radius-s); color: var(--muted2); font-weight: 600; margin-bottom: 5px; }
+    .nav-item:hover, .nav-item.active { background: var(--bg3); color: var(--blue2); }
+    .mobile-header { display: none; position: fixed; top: 0; width: 100%; background: var(--bg2); padding: 15px 20px; border-bottom: 1px solid var(--border); z-index: 1000; justify-content: space-between; }
+    .bottom-nav { display: none; position: fixed; bottom: 0; width: 100%; background: var(--bg2); border-top: 1px solid var(--border); padding: 12px 0; z-index: 1000; justify-content: space-around; }
+    .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted2); font-size: 10px; font-weight: 700; }
+
+    /* Deposit UI */
+    .amount-input-wrapper { position: relative; margin: 30px 0; }
+    .amount-input-wrapper i { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); font-size: 24px; color: var(--muted2); }
+    .deposit-input { width: 100%; background: var(--bg2); border: 2px solid var(--border); border-radius: 18px; padding: 20px 20px 20px 50px; font-size: 32px; font-weight: 800; color: var(--text); transition: 0.3s; }
+    .deposit-input:focus { outline: none; border-color: var(--blue2); background: var(--bg3); }
+
+    .preset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 12px; margin-bottom: 30px; }
+    .preset-btn { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; }
+    .preset-btn:hover, .preset-btn.active { border-color: var(--blue2); background: var(--blue); color: white; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th { text-align: left; padding: 15px; font-size: 12px; color: var(--muted2); border-bottom: 1px solid var(--border); }
+    td { padding: 18px 15px; font-size: 14px; border-bottom: 1px solid var(--border); }
+
+    @media (max-width: 992px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 100px 20px 100px; }
+      .mobile-header, .bottom-nav { display: flex; }
+    }
+  </style>
+</head>
+<body data-page="deposit">
+  <div id="global-loader"><div class="spinner"></div></div>
+
+  <div class="layout-wrapper">
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar">
+      <div class="flex" style="gap: 12px; margin-bottom: 40px; padding-left: 10px;">
+        <div style="width: 35px; height: 35px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white;"></i></div>
+        <span style="font-size: 22px; font-weight: 900;">BluePay</span>
+      </div>
+      <nav style="flex: 1;">
+        <a href="dashboard.html" class="nav-item"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="deposit.html" class="nav-item active"><i class="fa-solid fa-wallet"></i> Deposit</a>
+        <a href="invest.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> Invest</a>
+        <a href="withdraw.html" class="nav-item"><i class="fa-solid fa-bank"></i> Withdraw</a>
+        <a href="buy-code.html" class="nav-item"><i class="fa-solid fa-key"></i> Buy Code</a>
+        <a href="transactions.html" class="nav-item"><i class="fa-solid fa-list-ul"></i> Transactions</a>
+        <a href="referrals.html" class="nav-item"><i class="fa-solid fa-users"></i> Referrals</a>
+        <a href="support.html" class="nav-item"><i class="fa-solid fa-headset"></i> Support</a>
+        <a href="notifications.html" class="nav-item"><i class="fa-solid fa-bell"></i> Notifications</a>
+        <a href="profile.html" class="nav-item"><i class="fa-solid fa-user-circle"></i> Profile</a>
+      </nav>
+      <div style="padding-top: 20px; border-top: 1px solid var(--border);">
+        <a href="#" data-logout class="nav-item" style="color: var(--red);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+      </div>
+    </aside>
+
+    <!-- Mobile Navigation -->
+    <header class="mobile-header">
+      <div class="flex" style="gap: 10px;"><div style="width: 32px; height: 32px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white; font-size: 14px;"></i></div><span style="font-size: 18px; font-weight: 900;">BluePay</span></div>
+      <a href="notifications.html" style="position: relative;"><i class="fa-solid fa-bell" style="font-size: 22px; color: var(--muted2);"></i></a>
+    </header>
+    <nav class="bottom-nav">
+      <a href="dashboard.html" class="b-nav-item"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="invest.html" class="b-nav-item"><i class="fa-solid fa-chart-line"></i> Invest</a>
+      <a href="withdraw.html" class="b-nav-item"><i class="fa-solid fa-bank"></i> Withdraw</a>
+      <a href="support.html" class="b-nav-item"><i class="fa-solid fa-headset"></i> Support</a>
+      <a href="profile.html" class="b-nav-item"><i class="fa-solid fa-user"></i> Profile</a>
+    </nav>
+
+    <main class="main-content">
+      <div class="reveal" style="margin-bottom: 40px;">
+        <h1 style="font-size: 28px; margin-bottom: 8px;">Fund Your Wallet</h1>
+        <p>Current Balance: <b id="current-balance" style="color: var(--text);">₦0.00</b></p>
+      </div>
+
+      <div class="grid grid-3" style="grid-template-columns: 1.5fr 1fr; gap: 40px;">
+        <div class="card reveal">
+          <h3 style="font-size: 18px; margin-bottom: 10px;">Enter Amount</h3>
+          <p style="font-size: 14px;">Minimum deposit is ₦1,000. Maximum ₦10M per transaction.</p>
+          
+          <div class="amount-input-wrapper">
+            <i>₦</i>
+            <input type="number" id="deposit-amount" class="deposit-input" placeholder="0.00" min="1000">
+          </div>
+
+          <div class="preset-grid">
+            <button class="preset-btn" data-val="5000">₦5,000</button>
+            <button class="preset-btn" data-val="10000">₦10,000</button>
+            <button class="preset-btn" data-val="50000">₦50,000</button>
+            <button class="preset-btn" data-val="100000">₦100,000</button>
+          </div>
+
+          <button id="pay-btn" class="btn btn-primary" style="width: 100%; padding: 20px; font-size: 18px;">
+            <i class="fa-solid fa-shield-check"></i> Pay with Paystack
+          </button>
+          
+          <div class="flex-center" style="margin-top: 25px; gap: 15px;">
+            <img src="https://paystack.com/assets/img/login/paystack-logo.png" height="20" style="filter: grayscale(1) opacity(0.5);" alt="Paystack">
+            <span style="font-size: 12px; color: var(--muted2); font-weight: 600;">Secured by Paystack</span>
+          </div>
+        </div>
+
+        <div class="grid" style="gap: 30px;">
+          <div class="card reveal" style="background: rgba(34,197,94,0.05); border-color: rgba(34,197,94,0.2);">
+            <h3 style="font-size: 16px; margin-bottom: 15px;">Quick Guide</h3>
+            <div class="grid" style="gap: 15px; font-size: 13px;">
+              <div class="flex" style="gap: 12px;">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--green); color: var(--bg); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 10px;">1</div>
+                <p>Enter the amount you wish to add.</p>
+              </div>
+              <div class="flex" style="gap: 12px;">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--green); color: var(--bg); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 10px;">2</div>
+                <p>Complete payment on the Paystack popup.</p>
+              </div>
+              <div class="flex" style="gap: 12px;">
+                <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--green); color: var(--bg); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 10px;">3</div>
+                <p>Your balance updates automatically.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deposit History -->
+      <div class="card reveal" style="margin-top: 40px;">
+        <h3 style="font-size: 20px; margin-bottom: 20px;">Deposit History</h3>
+        <div style="overflow-x: auto;">
+          <table id="deposit-history">
+            <thead>
+              <tr>
+                <th>DATE</th>
+                <th>AMOUNT</th>
+                <th>METHOD</th>
+                <th>REFERENCE</th>
+                <th>STATUS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="5" style="text-align: center; color: var(--muted2); padding: 40px;">Loading history...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script src="app.js" type="module"></script>
+  <script type="module">
+    import { auth, triggerPaystack, createDeposit, confirmDeposit, listenUser, db, fmtN, badge, requireAuth, toast } from './firebase-config.js';
+    import { collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    requireAuth((user) => {
+      const amountInput = document.getElementById('deposit-amount');
+      const payBtn = document.getElementById('pay-btn');
+
+      // Sync Balance
+      listenUser(user.uid, (data) => {
+        document.getElementById('current-balance').innerText = fmtN(data.balance);
+      });
+
+      // Preset Amounts
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          amountInput.value = btn.dataset.val;
+        };
+      });
+
+      // Paystack Logic
+      payBtn.onclick = async () => {
+        const amount = parseFloat(amountInput.value);
+        if (!amount || amount < 1000) {
+          toast("Minimum deposit is ₦1,000", "warning");
+          return;
+        }
+
+        payBtn.disabled = true;
+        payBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Initializing Gateway...`;
+
+        triggerPaystack({
+          email: user.email,
+          amount: amount,
+          description: `Wallet Funding - ${user.displayName}`,
+          onSuccess: async (response) => {
+            toast("Payment successful! Updating balance...", "success");
+            const depositId = await createDeposit(user.uid, amount, "Paystack", response.reference);
+            await confirmDeposit(depositId, user.uid, amount);
+            
+            setTimeout(() => { window.location.href = "dashboard.html"; }, 2000);
+          },
+          onCancel: () => {
+            toast("Payment cancelled", "info");
+            payBtn.disabled = false;
+            payBtn.innerHTML = `<i class="fa-solid fa-shield-check"></i> Pay with Paystack`;
+          }
+        });
+      };
+
+      // Listen to Deposit History
+      const q = query(collection(db, "deposits"), where("uid", "==", user.uid), orderBy("createdAt", "desc"));
+      onSnapshot(q, (snap) => {
+        const tbody = document.querySelector('#deposit-history tbody');
+        if (snap.empty) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--muted2); padding: 40px;">No deposits recorded yet.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = snap.docs.map(doc => {
+          const d = doc.data();
+          const date = d.createdAt ? d.createdAt.toDate().toLocaleDateString('en-NG', {day:'numeric', month:'short', year:'numeric'}) : "...";
+          return `
+            <tr>
+              <td style="font-weight: 600;">${date}</td>
+              <td style="font-weight: 800; color: var(--green);">${fmtN(d.amount)}</td>
+              <td>${d.method}</td>
+              <td style="font-family: monospace; font-size: 12px; color: var(--muted2);">${d.paystackRef.substr(0,12)}...</td>
+              <td><span class="badge ${badge(d.status)}">${d.status}</span></td>
+            </tr>
+          `;
+        }).join('');
+      });
+
+      // Loader Safe-Hide
+      setTimeout(() => {
+        const l = document.getElementById('global-loader');
+        if (l) { l.style.opacity = '0'; setTimeout(() => l.style.display='none', 500); }
+      }, 800);
+    });
+  </script>
+</body>
+</html>

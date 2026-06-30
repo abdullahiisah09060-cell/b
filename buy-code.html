@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buy Code — BluePay</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* Reuse Sidebar Layout */
+    .layout-wrapper { display: flex; min-height: 100vh; }
+    .sidebar { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); padding: 30px 20px; position: fixed; height: 100vh; display: flex; flex-direction: column; z-index: 100; }
+    .main-content { flex: 1; margin-left: 260px; padding: 40px; }
+    .nav-item { display: flex; align-items: center; gap: 15px; padding: 14px 18px; border-radius: var(--radius-s); color: var(--muted2); font-weight: 600; margin-bottom: 5px; }
+    .nav-item:hover, .nav-item.active { background: var(--bg3); color: var(--blue2); }
+    .mobile-header { display: none; position: fixed; top: 0; width: 100%; background: var(--bg2); padding: 15px 20px; border-bottom: 1px solid var(--border); z-index: 1000; justify-content: space-between; }
+    .bottom-nav { display: none; position: fixed; bottom: 0; width: 100%; background: var(--bg2); border-top: 1px solid var(--border); padding: 12px 0; z-index: 1000; justify-content: space-around; }
+    .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted2); font-size: 10px; font-weight: 700; }
+
+    /* Buy Code UI */
+    .price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 30px; }
+    .price-card { background: var(--bg2); border: 2px solid var(--border); border-radius: 20px; padding: 30px; text-align: center; cursor: pointer; transition: 0.3s; position: relative; }
+    .price-card:hover, .price-card.selected { border-color: var(--blue2); background: rgba(26,86,219,0.05); transform: translateY(-5px); }
+    .price-card.selected::after { content: '\f058'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; top: 15px; right: 15px; color: var(--blue2); font-size: 20px; }
+
+    /* Modal */
+    #code-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(10px); }
+    .code-display { background: var(--bg3); border: 2px dashed var(--blue2); padding: 25px; border-radius: 15px; font-size: 28px; font-weight: 900; font-family: monospace; letter-spacing: 2px; color: var(--blue2); margin: 30px 0; position: relative; text-align: center; }
+
+    @media (max-width: 992px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 100px 20px 100px; }
+      .mobile-header, .bottom-nav { display: flex; }
+    }
+  </style>
+</head>
+<body data-page="buy-code">
+  <div id="global-loader"><div class="spinner"></div></div>
+
+  <div class="layout-wrapper">
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar">
+      <div class="flex" style="gap: 12px; margin-bottom: 40px; padding-left: 10px;">
+        <div style="width: 35px; height: 35px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white;"></i></div>
+        <span style="font-size: 22px; font-weight: 900;">BluePay</span>
+      </div>
+      <nav style="flex: 1;">
+        <a href="dashboard.html" class="nav-item"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="deposit.html" class="nav-item"><i class="fa-solid fa-wallet"></i> Deposit</a>
+        <a href="invest.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> Invest</a>
+        <a href="withdraw.html" class="nav-item"><i class="fa-solid fa-bank"></i> Withdraw</a>
+        <a href="buy-code.html" class="nav-item active"><i class="fa-solid fa-key"></i> Buy Code</a>
+        <a href="transactions.html" class="nav-item"><i class="fa-solid fa-list-ul"></i> Transactions</a>
+        <a href="referrals.html" class="nav-item"><i class="fa-solid fa-users"></i> Referrals</a>
+        <a href="support.html" class="nav-item"><i class="fa-solid fa-headset"></i> Support</a>
+        <a href="notifications.html" class="nav-item"><i class="fa-solid fa-bell"></i> Notifications</a>
+        <a href="profile.html" class="nav-item"><i class="fa-solid fa-user-circle"></i> Profile</a>
+      </nav>
+      <div style="padding-top: 20px; border-top: 1px solid var(--border);">
+        <a href="#" data-logout class="nav-item" style="color: var(--red);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="reveal" style="margin-bottom: 40px;">
+        <h1 style="font-size: 28px; margin-bottom: 8px;">Security Center</h1>
+        <p>Purchase a withdrawal validation code to secure your payout.</p>
+      </div>
+
+      <div class="card reveal" style="background: rgba(26,86,219,0.05); border-color: var(--borderb); margin-bottom: 40px;">
+        <div class="flex" style="gap: 20px;">
+          <i class="fa-solid fa-circle-info" style="font-size: 24px; color: var(--blue2);"></i>
+          <p style="font-size: 14px; line-height: 1.6;">
+            Withdrawal codes are a premium security layer. Each code validates <b>one single withdrawal request</b>. 
+            Once used, the code is destroyed. All codes expire 24 hours after purchase.
+          </p>
+        </div>
+      </div>
+
+      <h3 class="reveal" style="font-size: 18px;">Select Code Type</h3>
+      <div class="price-grid reveal">
+        <div class="price-card" data-amt="500">
+          <h2 style="font-size: 32px;">₦500</h2>
+          <p style="font-size: 12px; margin-top: 10px; font-weight: 700; color: var(--muted2);">STANDARD CODE</p>
+        </div>
+        <div class="price-card selected" data-amt="1000">
+          <h2 style="font-size: 32px;">₦1,000</h2>
+          <p style="font-size: 12px; margin-top: 10px; font-weight: 700; color: var(--muted2);">BUSINESS CODE</p>
+        </div>
+        <div class="price-card" data-amt="2000">
+          <h2 style="font-size: 32px;">₦2,000</h2>
+          <p style="font-size: 12px; margin-top: 10px; font-weight: 700; color: var(--muted2);">PREMIUM CODE</p>
+        </div>
+        <div class="price-card" data-amt="5000">
+          <h2 style="font-size: 32px;">₦5,000</h2>
+          <p style="font-size: 12px; margin-top: 10px; font-weight: 700; color: var(--muted2);">ELITE CODE</p>
+        </div>
+      </div>
+
+      <button id="buy-code-btn" class="btn btn-primary" style="width: 100%; margin-top: 40px; padding: 20px; font-size: 18px;">
+        <i class="fa-solid fa-cart-shopping"></i> Purchase Code via Wallet
+      </button>
+
+      <!-- Active Codes Section -->
+      <div style="margin-top: 60px;">
+        <h3 class="reveal" style="font-size: 20px; margin-bottom: 25px;">My Security Codes</h3>
+        <div id="codes-list" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+          <!-- Active codes injected here -->
+          <div class="skeleton" style="height: 100px; border-radius: 18px;"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Code Reveal Modal -->
+  <div id="code-modal">
+    <div class="card reveal" style="width: 100%; max-width: 450px; text-align: center;">
+      <h2 style="font-size: 24px;">Code Generated! 🔑</h2>
+      <p style="margin-top: 10px;">Please copy and save this code securely. It will only be shown once.</p>
+      
+      <div id="code-value" class="code-display">WDC-8273-X921</div>
+      
+      <div class="flex" style="gap: 15px;">
+        <button id="copy-code" class="btn btn-outline" style="flex: 1;"><i class="fa-solid fa-copy"></i> Copy Code</button>
+        <a href="withdraw.html" class="btn btn-primary" style="flex: 1;">Withdraw Now</a>
+      </div>
+      <p style="margin-top: 25px; font-size: 11px; color: var(--red); font-weight: 800;">
+        <i class="fa-solid fa-triangle-exclamation"></i> DO NOT SHARE THIS CODE WITH ANYONE
+      </p>
+    </div>
+  </div>
+
+  <script src="app.js" type="module"></script>
+  <script type="module">
+    import { auth, purchaseCode, getUserCodes, fmtN, badge, requireAuth, toast, listenUser } from './firebase-config.js';
+
+    requireAuth(async (user) => {
+      let currentBalance = 0;
+      let selectedAmount = 1000;
+
+      // Sync Balance
+      listenUser(user.uid, (data) => {
+        currentBalance = data.balance;
+      });
+
+      // Price Card Selection
+      document.querySelectorAll('.price-card').forEach(card => {
+        card.onclick = () => {
+          document.querySelectorAll('.price-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selectedAmount = parseFloat(card.dataset.amt);
+        };
+      });
+
+      // Buy Logic
+      document.getElementById('buy-code-btn').onclick = async () => {
+        if (currentBalance < selectedAmount) return toast("Insufficient wallet balance.", "error");
+
+        document.getElementById('buy-code-btn').disabled = true;
+        document.getElementById('buy-code-btn').innerText = "Processing Transaction...";
+
+        try {
+          const res = await purchaseCode(user.uid, selectedAmount);
+          document.getElementById('code-value').innerText = res.codeString;
+          document.getElementById('code-modal').style.display = 'flex';
+          loadCodes(); // Refresh list
+        } catch (err) {
+          toast(err, "error");
+        } finally {
+          document.getElementById('buy-code-btn').disabled = false;
+          document.getElementById('buy-code-btn').innerText = "Purchase Code via Wallet";
+        }
+      };
+
+      // Copy logic
+      document.getElementById('copy-code').onclick = () => {
+        const val = document.getElementById('code-value').innerText;
+        navigator.clipboard.writeText(val);
+        document.getElementById('copy-code').innerHTML = `<i class="fa-solid fa-check"></i> Copied!`;
+        setTimeout(() => {
+          document.getElementById('copy-code').innerHTML = `<i class="fa-solid fa-copy"></i> Copy Code`;
+        }, 2000);
+      };
+
+      // Load History
+      async function loadCodes() {
+        const data = await getUserCodes(user.uid);
+        const list = document.getElementById('codes-list');
+        
+        if (data.length === 0) {
+          list.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align: center;"><p>No security codes purchased yet.</p></div>`;
+          return;
+        }
+
+        list.innerHTML = data.map(c => {
+          const expires = c.expiresAt.toDate();
+          const isExpired = expires < new Date();
+          const masked = c.code.substr(0, 8) + "****";
+          
+          return `
+            <div class="card flex-between" style="padding: 20px; opacity: ${c.used || isExpired ? '0.6' : '1'}">
+              <div>
+                <p style="font-size: 11px; font-weight: 700; color: var(--muted2);">PURCHASED: ${fmtN(c.paidAmount)}</p>
+                <h4 style="font-family: monospace; margin: 5px 0;">${c.used ? masked : c.code}</h4>
+                <p style="font-size: 10px; color: var(--muted);">Expires: ${expires.toLocaleDateString()}</p>
+              </div>
+              <span class="badge ${c.used ? 'badge-muted' : (isExpired ? 'badge-danger' : 'badge-success')}">
+                ${c.used ? 'USED' : (isExpired ? 'EXPIRED' : 'ACTIVE')}
+              </span>
+            </div>
+          `;
+        }).join('');
+      }
+
+      loadCodes();
+      setTimeout(() => { document.getElementById('global-loader').style.display = 'none'; }, 800);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- HELPER FUNCTIONS ---
+    
+    function isAuth() {
+      return request.auth != null;
+    }
+    
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+    
+    function isAdmin() {
+      return isAuth() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // --- COLLECTION RULES ---
+
+    // User Profiles
+    match /users/{uid} {
+      allow read: if isAuth() && (isOwner(uid) || isAdmin());
+      allow create: if isAuth() && isOwner(uid);
+      allow update: if isAuth() && (isOwner(uid) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Transactions
+    match /transactions/{txId} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update, delete: if isAdmin();
+    }
+
+    // Withdrawals
+    match /withdrawals/{wId} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAdmin();
+    }
+    
+    // Deposits
+    match /deposits/{dId} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAdmin();
+    }
+
+    // Security Codes
+    match /codes/{codeId} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+    // Investment Portfolio
+    match /investments/{invId} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+    // Support System (Threads & Messages)
+    match /support/{threadId} {
+      allow read, write: if isAuth() && (threadId == request.auth.uid || isAdmin());
+      
+      match /messages/{msgId} {
+        allow read, create: if isAuth();
+      }
+    }
+
+    // Notifications
+    match /notifications/{notifId} {
+      allow read: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update, delete: if isAuth() && resource.data.uid == request.auth.uid;
+    }
+
+    // KYC Records
+    match /kyc/{uid} {
+      allow read: if isAuth() && (isOwner(uid) || isAdmin());
+      allow create: if isAuth() && isOwner(uid);
+      allow update: if isAuth() && (isOwner(uid) || isAdmin());
+    }
+
+    // Referrals
+    match /referrals/{refId} {
+      allow read, create: if isAuth();
+    }
+
+    // Broadcasts
+    match /broadcasts/{bId} {
+      allow read: if isAuth();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Leaderboard
+    match /leaderboard/{uid} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Global Platform Settings
+    match /settings/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+
+  }
+}

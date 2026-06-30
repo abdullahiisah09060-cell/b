@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth()        { return request.auth != null; }
+    function isOwner(uid)    { return request.auth.uid == uid; }
+    function isAdmin()       {
+      return isAuth() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    match /users/{uid} {
+      allow read:   if isAuth() && (isOwner(uid) || isAdmin());
+      allow create: if isAuth() && isOwner(uid);
+      allow update: if isAuth() && (isOwner(uid) || isAdmin());
+      allow delete: if isAdmin();
+    }
+    match /transactions/{txId} {
+      allow read:   if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update, delete: if isAdmin();
+    }
+    match /withdrawals/{wId} {
+      allow read:   if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAdmin();
+    }
+    match /deposits/{dId} {
+      allow read:   if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAdmin();
+    }
+    match /codes/{codeId} {
+      allow read:   if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+    match /investments/{invId} {
+      allow read:   if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAuth() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+    match /support/{threadId} {
+      allow read, write: if isAuth() &&
+        (resource == null || resource.data.uid == request.auth.uid || isAdmin());
+      match /messages/{msgId} {
+        allow read, create: if isAuth();
+      }
+    }
+    match /notifications/{notifId} {
+      allow read:   if isAuth() &&
+        (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if isAuth();
+      allow update: if isAuth() && resource.data.uid == request.auth.uid;
+    }
+    match /kyc/{uid} {
+      allow read:   if isAuth() && (isOwner(uid) || isAdmin());
+      allow create: if isAuth() && isOwner(uid);
+      allow update: if isAuth() && (isOwner(uid) || isAdmin());
+    }
+    match /referrals/{refId} {
+      allow read, create: if isAuth();
+    }
+    match /broadcasts/{bId} {
+      allow read:          if isAuth();
+      allow create, update, delete: if isAdmin();
+    }
+    match /leaderboard/{uid} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /settings/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdmin();
+    }
+  }
+}

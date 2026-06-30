@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction History — BluePay</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* Reuse Sidebar Layout */
+    .layout-wrapper { display: flex; min-height: 100vh; }
+    .sidebar { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); padding: 30px 20px; position: fixed; height: 100vh; display: flex; flex-direction: column; z-index: 100; }
+    .main-content { flex: 1; margin-left: 260px; padding: 40px; }
+    .nav-item { display: flex; align-items: center; gap: 15px; padding: 14px 18px; border-radius: var(--radius-s); color: var(--muted2); font-weight: 600; margin-bottom: 5px; }
+    .nav-item:hover, .nav-item.active { background: var(--bg3); color: var(--blue2); }
+    .mobile-header { display: none; position: fixed; top: 0; width: 100%; background: var(--bg2); padding: 15px 20px; border-bottom: 1px solid var(--border); z-index: 1000; justify-content: space-between; }
+    .bottom-nav { display: none; position: fixed; bottom: 0; width: 100%; background: var(--bg2); border-top: 1px solid var(--border); padding: 12px 0; z-index: 1000; justify-content: space-around; }
+    .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted2); font-size: 10px; font-weight: 700; }
+
+    /* Transactions UI */
+    .filter-bar { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; align-items: flex-end; }
+    .filter-group label { display: block; font-size: 11px; font-weight: 800; color: var(--muted2); margin-bottom: 8px; text-transform: uppercase; }
+    .filter-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); padding: 12px; border-radius: 8px; color: var(--text); font-size: 14px; }
+    
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+
+    /* Table & Mobile Cards */
+    .tx-table { width: 100%; border-collapse: collapse; }
+    .tx-table th { text-align: left; padding: 15px; font-size: 12px; color: var(--muted2); border-bottom: 1px solid var(--border); }
+    .tx-table td { padding: 18px 15px; font-size: 14px; border-bottom: 1px solid var(--border); }
+    .tx-icon-box { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+
+    .mobile-tx-card { display: none; background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 10px; }
+
+    @media (max-width: 992px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 100px 20px 100px; }
+      .mobile-header, .bottom-nav { display: flex; }
+      .tx-table { display: none; }
+      .mobile-tx-card { display: block; }
+      .filter-bar { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body data-page="transactions">
+  <div id="global-loader"><div class="spinner"></div></div>
+
+  <div class="layout-wrapper">
+    <aside class="sidebar">
+      <div class="flex" style="gap: 12px; margin-bottom: 40px; padding-left: 10px;">
+        <div style="width: 35px; height: 35px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white;"></i></div>
+        <span style="font-size: 22px; font-weight: 900;">BluePay</span>
+      </div>
+      <nav style="flex: 1;">
+        <a href="dashboard.html" class="nav-item"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="transactions.html" class="nav-item active"><i class="fa-solid fa-list-ul"></i> Transactions</a>
+        <a href="deposit.html" class="nav-item"><i class="fa-solid fa-wallet"></i> Deposit</a>
+        <a href="withdraw.html" class="nav-item"><i class="fa-solid fa-bank"></i> Withdraw</a>
+        <a href="referrals.html" class="nav-item"><i class="fa-solid fa-users"></i> Referrals</a>
+        <a href="support.html" class="nav-item"><i class="fa-solid fa-headset"></i> Support</a>
+        <a href="profile.html" class="nav-item"><i class="fa-solid fa-user-circle"></i> Profile</a>
+      </nav>
+      <div style="padding-top: 20px; border-top: 1px solid var(--border);">
+        <a href="#" data-logout class="nav-item" style="color: var(--red);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="flex-between reveal" style="margin-bottom: 30px;">
+        <div>
+          <h1 style="font-size: 28px; margin-bottom: 5px;">Transaction History</h1>
+          <p>Detailed log of all your account activities.</p>
+        </div>
+        <button id="export-csv" class="btn btn-outline" style="padding: 10px 20px; font-size: 13px;">
+          <i class="fa-solid fa-download"></i> Export CSV
+        </button>
+      </div>
+
+      <div class="stats-grid reveal">
+        <div class="card">
+          <p style="font-size: 11px; font-weight: 700; color: var(--muted2); margin-bottom: 5px;">TOTAL INFLOW</p>
+          <h2 id="stat-in" style="color: var(--green);">₦0.00</h2>
+        </div>
+        <div class="card">
+          <p style="font-size: 11px; font-weight: 700; color: var(--muted2); margin-bottom: 5px;">TOTAL OUTFLOW</p>
+          <h2 id="stat-out" style="color: var(--red);">₦0.00</h2>
+        </div>
+      </div>
+
+      <div class="filter-bar reveal">
+        <div class="filter-group">
+          <label>Type</label>
+          <select id="f-type" class="filter-input">
+            <option value="all">All Transactions</option>
+            <option value="deposit">Deposits</option>
+            <option value="withdrawal">Withdrawals</option>
+            <option value="investment">Investments</option>
+            <option value="daily_claim">Daily Claims</option>
+            <option value="referral_bonus">Referral Bonuses</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Status</label>
+          <select id="f-status" class="filter-input">
+            <option value="all">All Status</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="failed">Failed</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Search</label>
+          <input type="text" id="f-search" class="filter-input" placeholder="Keyword...">
+        </div>
+      </div>
+
+      <div class="card reveal" style="padding: 0;">
+        <table class="tx-table" id="tx-table">
+          <thead>
+            <tr>
+              <th>DATE</th>
+              <th>TYPE / DESCRIPTION</th>
+              <th>AMOUNT</th>
+              <th>STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="tx-tbody">
+            <!-- Rows injected by JS -->
+          </tbody>
+        </table>
+
+        <div id="mobile-tx-container">
+          <!-- Mobile cards injected here -->
+        </div>
+
+        <div id="empty-state" style="display: none; text-align: center; padding: 100px 0;">
+          <i class="fa-solid fa-receipt" style="font-size: 50px; color: var(--border); margin-bottom: 20px;"></i>
+          <p style="color: var(--muted2);">No transactions found matching your filters.</p>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex-center" style="padding: 25px; border-top: 1px solid var(--border); gap: 20px;">
+          <button id="prev-btn" class="btn btn-outline" style="padding: 8px 15px; font-size: 12px;"><i class="fa-solid fa-chevron-left"></i> Previous</button>
+          <span id="page-num" style="font-size: 13px; font-weight: 700; color: var(--muted2);">Page 1</span>
+          <button id="next-btn" class="btn btn-outline" style="padding: 8px 15px; font-size: 12px;">Next <i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js" type="module"></script>
+  <script type="module">
+    import { auth, listenTxs, fmtN, txMeta, txSign, badge, requireAuth, toast } from './firebase-config.js';
+    import { exportToCSV } from './app.js';
+
+    requireAuth((user) => {
+      let allTransactions = [];
+      let filtered = [];
+      let currentPage = 1;
+      const perPage = 15;
+
+      listenTxs(user.uid, (data) => {
+        allTransactions = data;
+        applyFilters();
+        calculateStats();
+      });
+
+      const applyFilters = () => {
+        const type = document.getElementById('f-type').value;
+        const status = document.getElementById('f-status').value;
+        const search = document.getElementById('f-search').value.toLowerCase();
+
+        filtered = allTransactions.filter(tx => {
+          const matchType = type === 'all' || tx.type === type;
+          const matchStatus = status === 'all' || tx.status === status;
+          const matchSearch = tx.description.toLowerCase().includes(search);
+          return matchType && matchStatus && matchSearch;
+        });
+
+        currentPage = 1;
+        render();
+      };
+
+      const calculateStats = () => {
+        let totalIn = 0, totalOut = 0;
+        allTransactions.forEach(tx => {
+          const sign = txSign(tx.type);
+          if (sign === '+') totalIn += tx.amount;
+          else totalOut += tx.amount;
+        });
+        document.getElementById('stat-in').innerText = fmtN(totalIn);
+        document.getElementById('stat-out').innerText = fmtN(totalOut);
+      };
+
+      const render = () => {
+        const tbody = document.getElementById('tx-tbody');
+        const mContainer = document.getElementById('mobile-tx-container');
+        const empty = document.getElementById('empty-state');
+        
+        const start = (currentPage - 1) * perPage;
+        const pageData = filtered.slice(start, start + perPage);
+
+        if (pageData.length === 0) {
+          tbody.innerHTML = ''; mContainer.innerHTML = ''; empty.style.display = 'block';
+        } else {
+          empty.style.display = 'none';
+          
+          tbody.innerHTML = pageData.map(tx => {
+            const meta = txMeta(tx.type);
+            const sign = txSign(tx.type);
+            const date = tx.createdAt ? tx.createdAt.toDate().toLocaleDateString('en-NG', {day:'numeric', month:'short', year:'numeric'}) : '...';
+            
+            return `
+              <tr>
+                <td style="color: var(--muted2); font-weight: 600;">${date}</td>
+                <td>
+                  <div class="flex" style="gap: 15px;">
+                    <div class="tx-icon-box" style="background: ${meta.bg}; color: ${meta.color};"><i class="fa-solid ${meta.icon}"></i></div>
+                    <div>
+                      <p style="font-weight: 700; color: var(--text);">${meta.label}</p>
+                      <p style="font-size: 11px; color: var(--muted2);">${tx.description}</p>
+                    </div>
+                  </div>
+                </td>
+                <td style="font-weight: 800; color: ${sign === '+' ? 'var(--green)' : 'var(--text)'};">${sign}${fmtN(tx.amount)}</td>
+                <td><span class="badge ${badge(tx.status)}">${tx.status}</span></td>
+              </tr>
+            `;
+          }).join('');
+
+          mContainer.innerHTML = pageData.map(tx => {
+            const meta = txMeta(tx.type);
+            const sign = txSign(tx.type);
+            const date = tx.createdAt ? tx.createdAt.toDate().toLocaleDateString('en-NG', {day:'numeric', month:'short'}) : '...';
+            return `
+              <div class="mobile-tx-card">
+                <div class="flex-between" style="margin-bottom: 10px;">
+                  <div class="flex" style="gap: 10px;">
+                    <div class="tx-icon-box" style="background: ${meta.bg}; color: ${meta.color}; width: 30px; height: 30px; font-size: 12px;"><i class="fa-solid ${meta.icon}"></i></div>
+                    <span style="font-weight: 800; font-size: 13px;">${meta.label}</span>
+                  </div>
+                  <span class="badge ${badge(tx.status)}" style="font-size: 9px;">${tx.status}</span>
+                </div>
+                <div class="flex-between">
+                   <p style="font-size: 12px; color: var(--muted2);">${date} • ${tx.description}</p>
+                   <b style="color: ${sign === '+' ? 'var(--green)' : 'var(--text)'}; font-size: 15px;">${sign}${fmtN(tx.amount)}</b>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        document.getElementById('page-num').innerText = `Page ${currentPage} of ${Math.ceil(filtered.length/perPage) || 1}`;
+        document.getElementById('prev-btn').disabled = currentPage === 1;
+        document.getElementById('next-btn').disabled = currentPage >= Math.ceil(filtered.length/perPage);
+      };
+
+      document.getElementById('f-type').onchange = applyFilters;
+      document.getElementById('f-status').onchange = applyFilters;
+      document.getElementById('f-search').oninput = applyFilters;
+
+      document.getElementById('prev-btn').onclick = () => { currentPage--; render(); };
+      document.getElementById('next-btn').onclick = () => { currentPage++; render(); };
+
+      document.getElementById('export-csv').onclick = () => {
+        const headers = ["Date", "Type", "Description", "Amount", "Status"];
+        const rows = filtered.map(tx => [
+          tx.createdAt ? tx.createdAt.toDate().toISOString() : '',
+          tx.type,
+          tx.description,
+          tx.amount,
+          tx.status
+        ]);
+        exportToCSV(`BluePay_Transactions_${new Date().toLocaleDateString()}.csv`, headers, rows);
+        toast("CSV Exported successfully", "success");
+      };
+
+      setTimeout(() => { document.getElementById('global-loader').style.display = 'none'; }, 600);
+    });
+  </script>
+</body>
+</html>

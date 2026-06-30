@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile — BluePay</title>
+  <link rel="stylesheet" href="global.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* Reuse Sidebar Layout */
+    .layout-wrapper { display: flex; min-height: 100vh; }
+    .sidebar { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); padding: 30px 20px; position: fixed; height: 100vh; display: flex; flex-direction: column; z-index: 100; }
+    .main-content { flex: 1; margin-left: 260px; padding: 40px; }
+    .nav-item { display: flex; align-items: center; gap: 15px; padding: 14px 18px; border-radius: var(--radius-s); color: var(--muted2); font-weight: 600; margin-bottom: 5px; }
+    .nav-item:hover, .nav-item.active { background: var(--bg3); color: var(--blue2); }
+    .mobile-header { display: none; position: fixed; top: 0; width: 100%; background: var(--bg2); padding: 15px 20px; border-bottom: 1px solid var(--border); z-index: 1000; justify-content: space-between; }
+    .bottom-nav { display: none; position: fixed; bottom: 0; width: 100%; background: var(--bg2); border-top: 1px solid var(--border); padding: 12px 0; z-index: 1000; justify-content: space-around; }
+    .b-nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--muted2); font-size: 10px; font-weight: 700; }
+
+    /* Profile Specific UI */
+    .profile-header { display: flex; align-items: center; gap: 30px; margin-bottom: 40px; flex-wrap: wrap; }
+    .avatar-wrapper { position: relative; width: 120px; height: 120px; }
+    .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid var(--bg3); background: var(--blue); display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 800; color: white; overflow: hidden; }
+    .edit-avatar-btn { position: absolute; bottom: 5px; right: 5px; width: 35px; height: 35px; background: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid var(--bg2); }
+
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+    .section-title { font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+
+    @media (max-width: 992px) {
+      .sidebar { display: none; }
+      .main-content { margin-left: 0; padding: 100px 20px 100px; }
+      .mobile-header, .bottom-nav { display: flex; }
+      .settings-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-page="profile">
+  <div id="global-loader"><div class="spinner"></div></div>
+
+  <div class="layout-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="flex" style="gap: 12px; margin-bottom: 40px; padding-left: 10px;">
+        <div style="width: 35px; height: 35px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white;"></i></div>
+        <span style="font-size: 22px; font-weight: 900;">BluePay</span>
+      </div>
+      <nav style="flex: 1;">
+        <a href="dashboard.html" class="nav-item"><i class="fa-solid fa-house"></i> Dashboard</a>
+        <a href="deposit.html" class="nav-item"><i class="fa-solid fa-wallet"></i> Deposit</a>
+        <a href="invest.html" class="nav-item"><i class="fa-solid fa-chart-line"></i> Invest</a>
+        <a href="withdraw.html" class="nav-item"><i class="fa-solid fa-bank"></i> Withdraw</a>
+        <a href="buy-code.html" class="nav-item"><i class="fa-solid fa-key"></i> Buy Code</a>
+        <a href="transactions.html" class="nav-item"><i class="fa-solid fa-list-ul"></i> Transactions</a>
+        <a href="referrals.html" class="nav-item"><i class="fa-solid fa-users"></i> Referrals</a>
+        <a href="support.html" class="nav-item"><i class="fa-solid fa-headset"></i> Support</a>
+        <a href="notifications.html" class="nav-item"><i class="fa-solid fa-bell"></i> Notifications</a>
+        <a href="profile.html" class="nav-item active"><i class="fa-solid fa-user-circle"></i> Profile</a>
+        <a href="kyc.html" class="nav-item"><i class="fa-solid fa-id-card"></i> KYC Verification</a>
+      </nav>
+      <div style="padding-top: 20px; border-top: 1px solid var(--border);">
+        <a href="#" data-logout class="nav-item" style="color: var(--red);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+      </div>
+    </aside>
+
+    <!-- Mobile Nav -->
+    <header class="mobile-header">
+      <div class="flex" style="gap: 10px;"><div style="width: 32px; height: 32px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white; font-size: 14px;"></i></div><span style="font-size: 18px; font-weight: 900;">BluePay</span></div>
+      <a href="notifications.html"><i class="fa-solid fa-bell" style="font-size: 22px; color: var(--muted2);"></i></a>
+    </header>
+    <nav class="bottom-nav">
+      <a href="dashboard.html" class="b-nav-item"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="invest.html" class="b-nav-item"><i class="fa-solid fa-chart-line"></i> Invest</a>
+      <a href="withdraw.html" class="b-nav-item"><i class="fa-solid fa-bank"></i> Withdraw</a>
+      <a href="support.html" class="b-nav-item"><i class="fa-solid fa-headset"></i> Support</a>
+      <a href="profile.html" class="b-nav-item active"><i class="fa-solid fa-user"></i> Profile</a>
+    </nav>
+
+    <main class="main-content">
+      <div class="profile-header reveal">
+        <div class="avatar-wrapper">
+          <div id="user-avatar" class="avatar-img">JD</div>
+          <label for="avatar-input" class="edit-avatar-btn"><i class="fa-solid fa-camera" style="font-size: 14px; color: white;"></i></label>
+          <input type="file" id="avatar-input" style="display: none;" accept="image/*">
+        </div>
+        <div>
+          <h1 id="user-fullname" style="font-size: 32px; margin-bottom: 5px;">User Name</h1>
+          <p id="user-email" style="font-size: 16px; margin-bottom: 12px;">email@example.com</p>
+          <div class="flex" style="gap: 10px;">
+            <span id="kyc-badge" class="badge badge-pending">KYC: Pending</span>
+            <span class="badge badge-success">Member</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <!-- Personal Info -->
+        <div class="card reveal">
+          <h3 class="section-title"><i class="fa-solid fa-user-pen" style="color: var(--blue2);"></i> Personal Information</h3>
+          <form id="profile-form">
+            <div class="auth-input-group">
+              <label>Full Name</label>
+              <input type="text" id="p-name" required>
+            </div>
+            <div class="auth-input-group">
+              <label>Phone Number</label>
+              <input type="tel" id="p-phone" required>
+            </div>
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
+              <div class="auth-input-group">
+                <label>Date of Birth</label>
+                <input type="date" id="p-dob">
+              </div>
+              <div class="auth-input-group">
+                <label>Occupation</label>
+                <input type="text" id="p-job">
+              </div>
+            </div>
+            <div class="auth-input-group">
+              <label>Home Address</label>
+              <input type="text" id="p-address">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Update Profile</button>
+          </form>
+        </div>
+
+        <!-- Security & Status -->
+        <div class="grid" style="gap: 30px;">
+          <div class="card reveal">
+            <h3 class="section-title"><i class="fa-solid fa-shield-lock" style="color: var(--gold);"></i> Security</h3>
+            <p style="font-size: 13px; margin-bottom: 20px;">Change your account password securely.</p>
+            <form id="password-form">
+              <div class="auth-input-group">
+                <label>Current Password</label>
+                <input type="password" id="old-pass" required>
+              </div>
+              <div class="auth-input-group">
+                <label>New Password</label>
+                <input type="password" id="new-pass" required>
+              </div>
+              <button type="submit" class="btn btn-outline" style="wi

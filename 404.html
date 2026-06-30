@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Page Not Found</title>
+  <link rel="stylesheet" href="global.css">
+  <style>
+    .err-container { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+    .err-404 { font-size: 180px; font-weight: 900; line-height: 1; margin-bottom: 20px; letter-spacing: -10px; }
+  </style>
+</head>
+<body>
+  <div class="err-container">
+    <div class="reveal">
+      <h1 class="err-404 grad-text">404</h1>
+      <h2 style="font-size: 32px; margin-bottom: 15px;">Lost in the Vault?</h2>
+      <p style="margin-bottom: 40px; max-width: 400px; margin-left: auto; margin-right: auto;">The page you are looking for doesn't exist or has been moved to a more secure location.</p>
+      <div class="flex" style="gap: 15px; justify-content: center;">
+        <a href="index.html" class="btn btn-outline">Go Home</a>
+        <a href="dashboard.html" class="btn btn-primary">Dashboard</a>
+      </div>
+    </div>
+  </div>
+  <script type="module">
+    window.onload = () => { document.querySelector('.reveal').classList.add('revealed'); };
+  </script>
+</body>
+</html>
