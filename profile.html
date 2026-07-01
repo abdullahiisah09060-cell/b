@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Settings | BluePay</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>My Profile | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -13,53 +13,31 @@
     <header class="mobile-header"></header>
 
     <main class="main-content">
-        <div class="reveal" style="margin-bottom: 40px;">
-            <h1>My Profile</h1>
-            <p>Manage your account data and vault security.</p>
-        </div>
+        <div class="reveal" style="margin-bottom: 40px;"><h1>Account Profile</h1><p>Update your personal and security settings.</p></div>
 
         <div class="grid" style="grid-template-columns: 1fr 1.5fr; gap: 30px; align-items: start;">
-            <!-- Profile Overview -->
             <div class="grid" style="gap: 30px;">
                 <div class="card reveal" style="text-align: center;">
-                    <div id="prof-avatar" style="width: 100px; height: 100px; border-radius: 50%; background: var(--blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 900; margin: 0 auto 20px; border: 4px solid var(--bg3);">BP</div>
-                    <h3 id="prof-display-name">Investor Name</h3>
-                    <p id="prof-email" style="font-size: 14px; color: var(--muted2); margin-bottom: 25px;">email@example.com</p>
-                    <div id="prof-kyc-status"></div>
+                    <div id="u-avatar" style="width: 100px; height: 100px; border-radius: 50%; background: var(--blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 900; margin: 0 auto 20px; border: 4px solid var(--bg3);">BP</div>
+                    <h3 id="u-name-display">Investor</h3>
+                    <p id="u-email-display" style="font-size: 14px; opacity: 0.7; margin-bottom: 20px;">email@example.com</p>
+                    <div id="u-kyc-badge"></div>
                 </div>
-
-                <div class="card reveal" style="background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.2);">
+                <div class="card reveal" style="border-color: var(--orange); background: rgba(245,158,11,0.05);">
                     <h4>Vault Security</h4>
-                    <p style="font-size: 13px; margin: 10px 0 20px;">Protect your capital by updating your password regularly.</p>
-                    <button id="btn-reset-pw" class="btn btn-outline" style="width: 100%; color: var(--orange); border-color: var(--orange); font-size: 13px;">Request Reset Email</button>
+                    <p style="font-size: 13px; margin: 10px 0 20px;">Request a password reset link to your email.</p>
+                    <button id="btn-pw-reset" class="btn btn-outline" style="width: 100%; color: var(--orange); border-color: var(--orange); font-size: 13px;">Reset Password</button>
                 </div>
             </div>
 
-            <!-- Edit Details -->
             <div class="card reveal">
-                <h3 style="margin-bottom: 25px;">Personal Information</h3>
-                <form id="profile-edit-form">
-                    <div class="auth-input-group">
-                        <label>Full Name</label>
-                        <input type="text" id="edit-name" required>
-                    </div>
-                    <div class="auth-input-group">
-                        <label>Phone Number</label>
-                        <input type="tel" id="edit-phone" required placeholder="080 1234 5678">
-                    </div>
-                    <div class="auth-input-group">
-                        <label>Email Address</label>
-                        <input type="email" id="edit-email" readonly style="opacity: 0.6; cursor: not-allowed;">
-                        <p style="font-size: 10px; margin-top: 5px; color: var(--muted);">Email cannot be changed for security reasons.</p>
-                    </div>
-                    <button type="submit" id="save-btn" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Save Profile Changes</button>
+                <h3>Personal Information</h3>
+                <form id="profile-form" style="margin-top: 25px;">
+                    <div class="auth-input-group"><label>Full Name</label><input type="text" id="p-name" required></div>
+                    <div class="auth-input-group"><label>Phone Number</label><input type="tel" id="p-phone" required></div>
+                    <div class="auth-input-group"><label>Email (Read Only)</label><input type="email" id="p-email" readonly style="opacity: 0.6;"></div>
+                    <button type="submit" id="save-profile" class="btn btn-primary" style="width: 100%;">Update Information</button>
                 </form>
-
-                <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border);">
-                    <h3>Identity Support</h3>
-                    <p style="font-size: 13px; margin: 10px 0 20px;">Verified accounts enjoy higher withdrawal priority.</p>
-                    <a href="kyc.html" class="btn btn-outline" style="width: 100%; font-size: 13px;">Open KYC Portal</a>
-                </div>
             </div>
         </div>
     </main>
@@ -69,53 +47,33 @@
     <script src="app.js" type="module"></script>
     <script type="module">
         import { auth, db, requireAuth } from './firebase-config.js';
-        import { initAppShell, showToast, toggleLoader } from './components.js';
+        import { initAppShell, showToast, setLoading } from './components.js';
         import { doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         requireAuth(user => {
             initAppShell('profile');
-
             onSnapshot(doc(db, "users", user.uid), snap => {
                 const d = snap.data();
-                if (!d) return;
-
-                document.getElementById('prof-display-name').innerText = d.displayName;
-                document.getElementById('prof-email').innerText = d.email;
-                document.getElementById('prof-avatar').innerText = d.displayName.split(' ').map(n => n[0]).join('').toUpperCase();
-                
-                document.getElementById('edit-name').value = d.displayName;
-                document.getElementById('edit-phone').value = d.phone || "";
-                document.getElementById('edit-email').value = d.email;
-
-                const kyc = document.getElementById('prof-kyc-status');
-                if (d.kycStatus === 'verified') kyc.innerHTML = `<span class="badge badge-success">✓ Fully Verified</span>`;
-                else if (d.kycStatus === 'pending') kyc.innerHTML = `<span class="badge badge-warning">Verification Pending</span>`;
-                else kyc.innerHTML = `<span class="badge badge-danger">Unverified</span>`;
+                document.getElementById('u-name-display').innerText = d.displayName;
+                document.getElementById('u-email-display').innerText = d.email;
+                document.getElementById('p-name').value = d.displayName;
+                document.getElementById('p-phone').value = d.phone || "";
+                document.getElementById('p-email').value = d.email;
+                document.getElementById('u-avatar').innerText = d.displayName.split(' ').map(n => n[0]).join('');
+                document.getElementById('u-kyc-badge').innerHTML = `<span class="badge ${d.kycStatus === 'verified' ? 'badge-success' : 'badge-danger'}">${d.kycStatus}</span>`;
             });
 
-            document.getElementById('profile-edit-form').onsubmit = async (e) => {
+            document.getElementById('profile-form').onsubmit = async (e) => {
                 e.preventDefault();
-                const btn = document.getElementById('save-btn');
-                const name = document.getElementById('edit-name').value;
-                const phone = document.getElementById('edit-phone').value;
-
-                toggleLoader(btn, true, "Updating...");
-                try {
-                    await updateDoc(doc(db, "users", user.uid), {
-                        displayName: name,
-                        phone: phone
-                    });
-                    showToast("Account updated successfully!", "success");
-                } catch (err) { showToast(err.message, "error"); }
-                toggleLoader(btn, false, "Save Profile Changes");
+                setLoading(document.getElementById('save-profile'), true);
+                await updateDoc(doc(db, "users", user.uid), { displayName: document.getElementById('p-name').value, phone: document.getElementById('p-phone').value });
+                showToast("Profile Updated!", "success");
+                setLoading(document.getElementById('save-profile'), false, "Update Information");
             };
 
-            document.getElementById('btn-reset-pw').onclick = async () => {
-                try {
-                    await sendPasswordResetEmail(auth, user.email);
-                    showToast("Password reset link sent to your inbox!", "success");
-                } catch (err) { showToast("Error sending reset email.", "error"); }
+            document.getElementById('btn-pw-reset').onclick = () => {
+                sendPasswordResetEmail(auth, user.email).then(() => showToast("Reset link sent!", "success")).catch(e => showToast(e.message, "error"));
             };
         });
     </script>
