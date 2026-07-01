@@ -3,58 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Referral Rewards — BluePay</title>
+    <title>Affiliate Program | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body data-page="dashboard">
+<body data-page="referrals">
     <div id="global-loader"><div class="spinner"></div></div>
     <aside class="sidebar"></aside>
     <header class="mobile-header"></header>
 
     <main class="main-content">
         <div class="reveal" style="margin-bottom: 40px;">
-            <h1>Affiliate Program</h1>
-            <p style="color: var(--muted2);">Earn ₦2,000 for every friend who starts investing.</p>
+            <h1>Refer & Earn</h1>
+            <p>Build your community and earn ₦2,000 for every new active investor.</p>
         </div>
 
-        <div class="card reveal" style="text-align: center; border-color: var(--border-blue); margin-bottom: 30px;">
-            <p style="font-size: 12px; font-weight: 800; color: var(--muted2); margin-bottom: 15px;">YOUR REFERRAL LINK</p>
-            <div class="flex-center" style="gap: 10px; background: var(--bg3); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
-                <code id="ref-link" style="font-size: 14px; color: var(--blue2);">https://bluepay.com/reg?ref=...</code>
-                <button onclick="copyRef()" class="btn btn-outline" style="padding: 10px;"><i class="fa-solid fa-copy"></i></button>
+        <div class="card reveal" style="text-align: center; border-color: var(--border-blue); margin-bottom: 40px; padding: 40px;">
+            <p class="text-micro" style="margin-bottom: 15px;">YOUR UNIQUE INVITE LINK</p>
+            <div class="flex-center" style="gap: 10px; background: var(--bg3); padding: 18px; border-radius: 12px; border: 1px solid var(--border); max-width: 600px; margin: 0 auto;">
+                <code id="ref-link-url" style="color: var(--blue2); font-weight: 700; font-size: 14px;">https://bluepay.vault/reg?ref=...</code>
+                <button id="copy-ref-url" style="background:none; border:none; color:white; cursor:pointer;"><i class="fa-solid fa-copy"></i></button>
             </div>
-            <div class="flex-center" style="gap: 15px; margin-top: 25px;">
-                <button class="btn btn-primary" style="background:#25D366; border:none;"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
-                <button class="btn btn-primary" style="background:#1DA1F2; border:none;"><i class="fa-brands fa-twitter"></i> Twitter</button>
+            <div class="flex-center" style="gap: 15px; margin-top: 30px;">
+                <button id="share-wa" class="btn btn-primary" style="background: #25D366; border:none; min-height: 40px; padding: 0 20px;"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+                <button id="share-tw" class="btn btn-primary" style="background: #1DA1F2; border:none; min-height: 40px; padding: 0 20px;"><i class="fa-brands fa-x-twitter"></i> Twitter</button>
             </div>
         </div>
 
-        <div class="grid-2 reveal">
+        <div class="grid-2 reveal" style="margin-bottom: 40px;">
             <div class="card">
-                <p style="font-size: 11px; font-weight: 700; color: var(--muted2);">TOTAL REFERRALS</p>
-                <h2 id="ref-count" style="margin-top: 5px;">0</h2>
+                <p class="text-micro">TOTAL AFFILIATES</p>
+                <h2 id="ref-count" style="font-size: 32px; margin-top: 10px;">0</h2>
             </div>
             <div class="card">
-                <p style="font-size: 11px; font-weight: 700; color: var(--muted2);">TOTAL COMMISSIONS</p>
-                <h2 id="ref-earnings" style="color: var(--green); margin-top: 5px;">₦0.00</h2>
+                <p class="text-micro">TOTAL COMMISSIONS</p>
+                <h2 id="ref-earnings" style="font-size: 32px; margin-top: 10px; color: var(--green);">₦0.00</h2>
+            </div>
+        </div>
+
+        <div class="card reveal" style="padding: 0; overflow: hidden;">
+            <div style="padding: 20px 25px; border-bottom: 1px solid var(--border);"><h3>Your Referrals</h3></div>
+            <div class="table-wrapper">
+                <table style="width: 100%;">
+                    <thead><tr><th>Date Joined</th><th>Member ID</th><th>Bonus Status</th></tr></thead>
+                    <tbody id="ref-table-body">
+                        <tr><td colspan="3" style="text-align:center; padding: 40px; color:var(--muted)">No referrals yet. Share your link to start earning.</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
 
     <nav class="bottom-nav"></nav>
+
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { auth, listenUser, toast, fmtN } from './firebase-config.js';
-        listenUser(auth.currentUser?.uid || "", user => {
-            document.getElementById('ref-link').innerText = `${window.location.origin}/register.html?ref=${user.referralCode}`;
-            document.getElementById('ref-count').innerText = user.referralCount || 0;
-            document.getElementById('ref-earnings').innerText = fmtN(user.referralEarnings || 0);
+        import { auth, db, fmtN, requireAuth } from './firebase-config.js';
+        import { initAppShell, showToast } from './components.js';
+        import { doc, onSnapshot, collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        requireAuth(user => {
+            initAppShell('referrals');
+
+            onSnapshot(doc(db, "users", user.uid), async snap => {
+                const d = snap.data();
+                const code = d.referralCode;
+                const link = `${window.location.origin}/register.html?ref=${code}`;
+                
+                document.getElementById('ref-link-url').innerText = link;
+                document.getElementById('ref-count').innerText = d.referralCount || 0;
+                document.getElementById('ref-earnings').innerText = fmtN(d.referralEarnings || 0);
+
+                // Sharing
+                const msg = encodeURIComponent(`Start investing on BluePay and earn daily ROI! Use my link to get a ₦200k welcome bonus: ${link}`);
+                document.getElementById('share-wa').onclick = () => window.open(`https://wa.me/?text=${msg}`);
+                document.getElementById('share-tw').onclick = () => window.open(`https://twitter.com/intent/tweet?text=${msg}`);
+
+                // History
+                const q = query(collection(db, "users"), where("referredBy", "==", code), orderBy("createdAt", "desc"));
+                const rSnap = await getDocs(q);
+                const body = document.getElementById('ref-table-body');
+                
+                if(!rSnap.empty) {
+                    body.innerHTML = rSnap.docs.map(doc => {
+                        const u = doc.data();
+                        return `
+                            <tr>
+                                <td>${u.createdAt ? u.createdAt.toDate().toLocaleDateString() : '...'}</td>
+                                <td style="font-family:monospace;">BP-${u.uid.substring(0,8)}</td>
+                                <td><span class="badge badge-success">₦2,000 Paid</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            });
+
+            document.getElementById('copy-ref-url').onclick = () => {
+                const val = document.getElementById('ref-link-url').innerText;
+                navigator.clipboard.writeText(val);
+                showToast("Referral link copied!", "success");
+            };
         });
-        window.copyRef = () => {
-            navigator.clipboard.writeText(document.getElementById('ref-link').innerText);
-            toast("Link copied!", "success");
-        };
     </script>
 </body>
 </html>
