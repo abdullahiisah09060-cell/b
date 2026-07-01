@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Account — BluePay</title>
+    <title>Account Settings | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -14,21 +14,30 @@
 
     <main class="main-content">
         <div class="reveal" style="margin-bottom: 40px;">
-            <h1>Profile Settings</h1>
-            <p style="color: var(--muted2);">Update your personal information and security preferences.</p>
+            <h1>My Profile</h1>
+            <p>Manage your account data and vault security.</p>
         </div>
 
         <div class="grid" style="grid-template-columns: 1fr 1.5fr; gap: 30px; align-items: start;">
-            <!-- Profile Card -->
-            <div class="card reveal" style="text-align: center;">
-                <div id="avatar-circle" style="width: 100px; height: 100px; border-radius: 50%; background: var(--blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; margin: 0 auto 20px;">JD</div>
-                <h3 id="prof-name">Investor</h3>
-                <p id="prof-email" style="font-size: 14px; color: var(--muted2); margin-bottom: 20px;">email@example.com</p>
-                <div id="prof-kyc-badge"></div>
+            <!-- Profile Overview -->
+            <div class="grid" style="gap: 30px;">
+                <div class="card reveal" style="text-align: center;">
+                    <div id="prof-avatar" style="width: 100px; height: 100px; border-radius: 50%; background: var(--blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 900; margin: 0 auto 20px; border: 4px solid var(--bg3);">BP</div>
+                    <h3 id="prof-display-name">Investor Name</h3>
+                    <p id="prof-email" style="font-size: 14px; color: var(--muted2); margin-bottom: 25px;">email@example.com</p>
+                    <div id="prof-kyc-status"></div>
+                </div>
+
+                <div class="card reveal" style="background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.2);">
+                    <h4>Vault Security</h4>
+                    <p style="font-size: 13px; margin: 10px 0 20px;">Protect your capital by updating your password regularly.</p>
+                    <button id="btn-reset-pw" class="btn btn-outline" style="width: 100%; color: var(--orange); border-color: var(--orange); font-size: 13px;">Request Reset Email</button>
+                </div>
             </div>
 
-            <!-- Edit Form -->
+            <!-- Edit Details -->
             <div class="card reveal">
+                <h3 style="margin-bottom: 25px;">Personal Information</h3>
                 <form id="profile-edit-form">
                     <div class="auth-input-group">
                         <label>Full Name</label>
@@ -36,14 +45,20 @@
                     </div>
                     <div class="auth-input-group">
                         <label>Phone Number</label>
-                        <input type="tel" id="edit-phone" required>
+                        <input type="tel" id="edit-phone" required placeholder="080 1234 5678">
                     </div>
-                    <button type="submit" id="save-btn" class="btn btn-primary" style="width: 100%;">Update Information</button>
+                    <div class="auth-input-group">
+                        <label>Email Address</label>
+                        <input type="email" id="edit-email" readonly style="opacity: 0.6; cursor: not-allowed;">
+                        <p style="font-size: 10px; margin-top: 5px; color: var(--muted);">Email cannot be changed for security reasons.</p>
+                    </div>
+                    <button type="submit" id="save-btn" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Save Profile Changes</button>
                 </form>
 
-                <div style="margin-top: 40px; padding-top: 40px; border-top: 1px solid var(--border);">
-                    <h3 style="margin-bottom: 20px;">Security</h3>
-                    <button onclick="resetPassword()" class="btn btn-outline" style="width: 100%; border-color: var(--orange); color: var(--orange);">Request Password Reset Email</button>
+                <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border);">
+                    <h3>Identity Support</h3>
+                    <p style="font-size: 13px; margin: 10px 0 20px;">Verified accounts enjoy higher withdrawal priority.</p>
+                    <a href="kyc.html" class="btn btn-outline" style="width: 100%; font-size: 13px;">Open KYC Portal</a>
                 </div>
             </div>
         </div>
@@ -53,45 +68,56 @@
 
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { auth, db, listenUser, toast } from './firebase-config.js';
-        import { updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { auth, db, requireAuth } from './firebase-config.js';
+        import { initAppShell, showToast, toggleLoader } from './components.js';
+        import { doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { toggleLoader } from './components.js';
 
-        listenUser(auth.currentUser?.uid || "", (user) => {
-            document.getElementById('prof-name').innerText = user.displayName;
-            document.getElementById('prof-email').innerText = user.email;
-            document.getElementById('edit-name').value = user.displayName;
-            document.getElementById('edit-phone').value = user.phone || "";
-            document.getElementById('avatar-circle').innerText = user.displayName.split(' ').map(n => n[0]).join('');
-            
-            const kyc = document.getElementById('prof-kyc-badge');
-            if(user.kycStatus === 'verified') kyc.innerHTML = '<span class="badge badge-success"><i class="fa-solid fa-check-circle"></i> VERIFIED</span>';
-            else kyc.innerHTML = '<span class="badge badge-warning">UNVERIFIED</span>';
-        });
+        requireAuth(user => {
+            initAppShell('profile');
 
-        document.getElementById('profile-edit-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('save-btn');
-            toggleLoader(true, btn);
-            try {
-                await updateDoc(doc(db, "users", auth.currentUser.uid), {
-                    displayName: document.getElementById('edit-name').value,
-                    phone: document.getElementById('edit-phone').value
-                });
-                toast("Profile updated!", "success");
-            } catch (err) {
-                toast(err.message, "error");
-            } finally {
-                toggleLoader(false, btn);
-            }
-        };
+            onSnapshot(doc(db, "users", user.uid), snap => {
+                const d = snap.data();
+                if (!d) return;
 
-        window.resetPassword = () => {
-            sendPasswordResetEmail(auth, auth.currentUser.email).then(() => {
-                toast("Reset link sent to your email", "success");
+                document.getElementById('prof-display-name').innerText = d.displayName;
+                document.getElementById('prof-email').innerText = d.email;
+                document.getElementById('prof-avatar').innerText = d.displayName.split(' ').map(n => n[0]).join('').toUpperCase();
+                
+                document.getElementById('edit-name').value = d.displayName;
+                document.getElementById('edit-phone').value = d.phone || "";
+                document.getElementById('edit-email').value = d.email;
+
+                const kyc = document.getElementById('prof-kyc-status');
+                if (d.kycStatus === 'verified') kyc.innerHTML = `<span class="badge badge-success">✓ Fully Verified</span>`;
+                else if (d.kycStatus === 'pending') kyc.innerHTML = `<span class="badge badge-warning">Verification Pending</span>`;
+                else kyc.innerHTML = `<span class="badge badge-danger">Unverified</span>`;
             });
-        };
+
+            document.getElementById('profile-edit-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('save-btn');
+                const name = document.getElementById('edit-name').value;
+                const phone = document.getElementById('edit-phone').value;
+
+                toggleLoader(btn, true, "Updating...");
+                try {
+                    await updateDoc(doc(db, "users", user.uid), {
+                        displayName: name,
+                        phone: phone
+                    });
+                    showToast("Account updated successfully!", "success");
+                } catch (err) { showToast(err.message, "error"); }
+                toggleLoader(btn, false, "Save Profile Changes");
+            };
+
+            document.getElementById('btn-reset-pw').onclick = async () => {
+                try {
+                    await sendPasswordResetEmail(auth, user.email);
+                    showToast("Password reset link sent to your inbox!", "success");
+                } catch (err) { showToast("Error sending reset email.", "error"); }
+            };
+        });
     </script>
 </body>
 </html>
