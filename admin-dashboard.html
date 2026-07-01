@@ -3,332 +3,634 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Terminal — BluePay</title>
+    <title>Admin Terminal | BluePay HQ</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --sidebar-w: 280px; }
-        body { background: #04060b; }
+        /* Admin Specific Architecture */
+        :root { --adm-sidebar: 280px; }
+        body { background: #04060b; display: flex; min-height: 100vh; }
+
+        /* Sidebar System */
+        .adm-sidebar { 
+            width: var(--adm-sidebar); background: var(--bg2); border-right: 1px solid var(--border);
+            height: 100vh; position: fixed; left: 0; top: 0; z-index: 1000; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column; padding: 30px 0;
+        }
+        .adm-main { flex: 1; margin-left: var(--adm-sidebar); padding: 40px; transition: margin 0.3s; }
         
-        .admin-layout { display: flex; min-height: 100vh; }
-        .admin-sidebar { 
-            width: var(--sidebar-w); 
-            background: var(--bg2); 
-            border-right: 1px solid var(--border); 
-            position: fixed; 
-            height: 100vh; 
-            padding: 30px 0; 
-            display: flex; 
-            flex-direction: column;
-            z-index: 1000;
-            transition: transform 0.3s ease;
+        .adm-nav-item { 
+            display: flex; align-items: center; gap: 15px; padding: 14px 25px; color: var(--muted2); 
+            font-weight: 600; cursor: pointer; border-left: 4px solid transparent; transition: 0.2s;
         }
+        .adm-nav-item:hover, .adm-nav-item.active { background: var(--bg3); color: var(--gold); border-left-color: var(--gold); }
+        .adm-nav-item i { width: 20px; text-align: center; font-size: 18px; }
+        .nav-badge { background: var(--red); color: white; font-size: 10px; padding: 2px 8px; border-radius: 10px; margin-left: auto; font-weight: 800; }
 
-        .admin-main { 
-            flex: 1; 
-            margin-left: var(--sidebar-w); 
-            padding: 40px; 
-            max-width: calc(100vw - var(--sidebar-w));
-        }
+        /* Stats Cards */
+        .stat-card { background: var(--bg2); border: 1px solid var(--border); padding: 25px; border-radius: 16px; position: relative; }
+        .stat-card p { font-size: 11px; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; }
+        .stat-card h2 { font-size: 32px; }
 
-        .nav-group { margin-bottom: 30px; }
-        .nav-label { padding: 0 25px; font-size: 11px; font-weight: 800; color: var(--muted); text-transform: uppercase; margin-bottom: 15px; display: block; }
-        .adm-nav-link { 
-            display: flex; align-items: center; gap: 15px; padding: 12px 25px; 
-            color: var(--muted2); font-weight: 600; text-decoration: none; border-left: 4px solid transparent; transition: 0.2s;
-        }
-        .adm-nav-link:hover, .adm-nav-link.active { background: var(--bg3); color: var(--gold); border-left-color: var(--gold); }
+        /* Tab Management */
+        .tab-view { display: none; animation: fadeIn 0.4s ease; }
+        .tab-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .stat-card { background: var(--bg2); border: 1px solid var(--border); padding: 25px; border-radius: var(--radius); }
-        
-        /* Mobile Adaptations */
+        /* Support Split Pane */
+        .support-container { display: flex; height: 650px; background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .support-list { width: 320px; border-right: 1px solid var(--border); overflow-y: auto; background: var(--bg2); }
+        .support-chat { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
+        .thread-item { padding: 20px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .thread-item:hover, .thread-item.active { background: var(--bg3); }
+        .thread-item.unread { border-left: 4px solid var(--blue2); }
+
+        /* Mobile Overrides */
         @media (max-width: 1024px) {
-            .admin-sidebar { transform: translateX(-100%); }
-            .admin-sidebar.open { transform: translateX(0); }
-            .admin-main { margin-left: 0; padding: 100px 20px 40px; max-width: 100vw; }
-            .mobile-toggle { display: flex !important; }
+            .adm-sidebar { transform: translateX(-100%); width: 280px; box-shadow: 20px 0 60px rgba(0,0,0,0.5); }
+            .adm-sidebar.open { transform: translateX(0); }
+            .adm-main { margin-left: 0; padding: 100px 20px 40px; }
+            .stat-grid { grid-template-columns: repeat(2, 1fr); }
+            .support-container { flex-direction: column; height: 80vh; }
+            .support-list { width: 100%; height: 200px; border-right: none; border-bottom: 1px solid var(--border); }
         }
 
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .table-res { width: 100%; overflow-x: auto; border-radius: 12px; background: var(--bg2); border: 1px solid var(--border); }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { background: var(--bg3); padding: 15px; text-align: left; font-size: 11px; color: var(--muted); text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid var(--border); font-size: 13px; }
-        
-        .badge-admin { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; }
+        /* KYC & Image Modals */
+        .kyc-img { width: 100%; border-radius: 12px; cursor: zoom-in; transition: 0.3s; margin-top: 15px; }
+        .kyc-img:hover { filter: brightness(1.2); }
     </style>
 </head>
 <body data-page="admin">
     <div id="global-loader"><div class="spinner"></div></div>
 
-    <header class="mobile-header" style="display: none; justify-content: space-between;">
-        <div class="flex" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i> Menu</div>
-        <span style="font-weight: 900; color: var(--gold);">ADMIN</span>
+    <!-- Mobile Header -->
+    <header class="mobile-header" style="display: none; background: var(--bg2);">
+        <div class="flex" style="gap: 15px;" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars-staggered" style="font-size: 22px;"></i>
+            <span style="font-weight: 900; color: var(--gold);">ADMIN PANEL</span>
+        </div>
     </header>
 
-    <div class="admin-layout">
-        <aside class="admin-sidebar" id="sidebar">
-            <div class="flex" style="padding: 0 25px 40px;">
-                <div style="width: 35px; height: 35px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-crown" style="color: black;"></i></div>
-                <span style="font-size: 20px; font-weight: 900; color: var(--gold);">BluePay Admin</span>
-            </div>
+    <aside class="adm-sidebar" id="sidebar">
+        <div class="flex" style="gap: 12px; padding: 0 25px 40px;">
+            <div style="width: 35px; height: 35px; background: var(--gold); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-crown" style="color: black; font-size: 16px;"></i></div>
+            <span style="font-size: 20px; font-weight: 900; color: var(--gold);">BluePay HQ</span>
+        </div>
 
-            <div class="nav-group">
-                <span class="nav-label">System</span>
-                <a href="#" class="adm-nav-link active" onclick="switchTab('overview')"><i class="fa-solid fa-chart-pie"></i> Overview</a>
-                <a href="#" class="adm-nav-link" onclick="switchTab('users')"><i class="fa-solid fa-users"></i> User Management</a>
-                <a href="#" class="adm-nav-link" onclick="switchTab('withdrawals')"><i class="fa-solid fa-bank"></i> Payout Requests</a>
-            </div>
+        <nav style="flex: 1;">
+            <div class="adm-nav-item active" data-tab="overview"><i class="fa-solid fa-gauge-high"></i> Overview</div>
+            <div class="adm-nav-item" data-tab="users"><i class="fa-solid fa-users-gear"></i> Users Management</div>
+            <div class="adm-nav-item" data-tab="withdrawals"><i class="fa-solid fa-hand-holding-dollar"></i> Payouts <span class="nav-badge" id="badge-w">0</span></div>
+            <div class="adm-nav-item" data-tab="deposits"><i class="fa-solid fa-wallet"></i> Deposits <span class="nav-badge" id="badge-d" style="background:var(--green)">0</span></div>
+            <div class="adm-nav-item" data-tab="investments"><i class="fa-solid fa-chart-pie"></i> Active Plans</div>
+            <div class="adm-nav-item" data-tab="kyc"><i class="fa-solid fa-id-card"></i> KYC Review <span class="nav-badge" id="badge-k" style="background:var(--orange)">0</span></div>
+            <div class="adm-nav-item" data-tab="support"><i class="fa-solid fa-headset"></i> Support Desk <span class="nav-badge" id="badge-s" style="background:var(--blue)">0</span></div>
+            <div class="adm-nav-item" data-tab="broadcast"><i class="fa-solid fa-bullhorn"></i> Broadcast</div>
+            <div class="adm-nav-item" data-tab="settings"><i class="fa-solid fa-gears"></i> Platform Settings</div>
+        </nav>
 
-            <div class="nav-group">
-                <span class="nav-label">Verification</span>
-                <a href="#" class="adm-nav-link" onclick="switchTab('kyc')"><i class="fa-solid fa-id-card"></i> KYC Review</a>
-                <a href="#" class="adm-nav-link" onclick="switchTab('support')"><i class="fa-solid fa-comments"></i> Support Chat</a>
-            </div>
+        <div style="padding: 20px 25px; border-top: 1px solid var(--border);">
+            <a href="dashboard.html" class="adm-nav-item" style="padding: 10px 0;"><i class="fa-solid fa-arrow-left-long"></i> Back to User UI</a>
+        </div>
+    </aside>
 
-            <div class="nav-group">
-                <span class="nav-label">Platform</span>
-                <a href="#" class="adm-nav-link" onclick="switchTab('broadcast')"><i class="fa-solid fa-bullhorn"></i> Global Broadcast</a>
-                <a href="#" class="adm-nav-link" onclick="switchTab('settings')"><i class="fa-solid fa-gears"></i> Settings</a>
-            </div>
-
-            <div style="margin-top: auto; padding: 0 25px;">
-                <a href="dashboard.html" class="btn btn-outline" style="width: 100%;"><i class="fa-solid fa-arrow-left"></i> Exit Terminal</a>
-            </div>
-        </aside>
-
-        <main class="admin-main">
-            <!-- Overview Tab -->
-            <section id="tab-overview" class="tab-content active">
-                <h1 style="margin-bottom: 30px;">Platform Health</h1>
-                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
-                    <div class="stat-card">
-                        <p style="font-size: 12px; font-weight: 700; color: var(--muted2);">TOTAL USERS</p>
-                        <h2 id="adm-total-users" style="font-size: 32px; margin-top: 10px;">0</h2>
-                    </div>
-                    <div class="stat-card">
-                        <p style="font-size: 12px; font-weight: 700; color: var(--muted2);">PLATFORM LIQUIDITY</p>
-                        <h2 id="adm-total-bal" class="gold-text" style="font-size: 32px; margin-top: 10px;">₦0.00</h2>
-                    </div>
-                    <div class="stat-card">
-                        <p style="font-size: 12px; font-weight: 700; color: var(--muted2);">ACTIVE INVESTMENTS</p>
-                        <h2 id="adm-total-invested" style="font-size: 32px; margin-top: 10px;">₦0.00</h2>
-                    </div>
+    <main class="adm-main">
+        
+        <!-- SECTION: OVERVIEW -->
+        <section id="view-overview" class="tab-view active">
+            <h1 style="margin-bottom: 30px;">System Health</h1>
+            <div class="grid-3 stat-grid">
+                <div class="stat-card">
+                    <p>TOTAL LIQUIDITY</p>
+                    <h2 class="gold-text" id="stat-liq">₦0.00</h2>
                 </div>
-
-                <div class="card" style="margin-top: 40px; padding: 0;">
-                    <div style="padding: 20px; border-bottom: 1px solid var(--border);"><h3>Live Transaction Feed</h3></div>
-                    <div class="table-res">
-                        <table id="live-tx-table">
-                            <thead>
-                                <tr><th>Time</th><th>User</th><th>Action</th><th>Amount</th><th>Status</th></tr>
-                            </thead>
-                            <tbody id="live-tx-body"></tbody>
-                        </table>
-                    </div>
+                <div class="stat-card">
+                    <p>TOTAL INVESTED</p>
+                    <h2 id="stat-inv">₦0.00</h2>
                 </div>
-            </section>
+                <div class="stat-card">
+                    <p>REGISTERED USERS</p>
+                    <h2 id="stat-users">0</h2>
+                </div>
+                <div class="stat-card">
+                    <p>PENDING PAYOUTS</p>
+                    <h2 id="stat-pend-w" style="color: var(--orange);">₦0.00</h2>
+                </div>
+                <div class="stat-card">
+                    <p>TOTAL PROFIT PAID</p>
+                    <h2 id="stat-profit" style="color: var(--green);">₦0.00</h2>
+                </div>
+                <div class="stat-card">
+                    <p>KYC COMPLIANCE</p>
+                    <h2 id="stat-kyc">0%</h2>
+                </div>
+            </div>
 
-            <!-- Payouts Tab -->
-            <section id="tab-withdrawals" class="tab-content">
-                <h1 style="margin-bottom: 30px;">Pending Withdrawals</h1>
-                <div class="table-res">
+            <div class="card" style="margin-top: 30px; padding: 0;">
+                <div style="padding: 20px 25px; border-bottom: 1px solid var(--border);"><h3>Global Transaction Feed</h3></div>
+                <div class="table-wrapper">
                     <table>
                         <thead>
-                            <tr><th>User Info</th><th>Bank Details</th><th>Amount</th><th>Validator</th><th>Actions</th></tr>
+                            <tr><th>User</th><th>Action</th><th>Amount</th><th>Status</th><th>Time</th></tr>
                         </thead>
-                        <tbody id="payout-body"></tbody>
+                        <tbody id="global-tx-feed"></tbody>
                     </table>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- Users Tab -->
-            <section id="tab-users" class="tab-content">
-                <div class="flex-between" style="margin-bottom: 30px;">
-                    <h1>User Database</h1>
-                    <input type="text" id="user-search" placeholder="Search by name/email..." class="btn btn-outline" style="text-align: left; width: 300px;">
-                </div>
-                <div class="table-res">
-                    <table>
-                        <thead>
-                            <tr><th>Name</th><th>Email</th><th>Balance</th><th>KYC</th><th>Last Seen</th><th>Adjust</th></tr>
-                        </thead>
-                        <tbody id="user-body"></tbody>
-                    </table>
-                </div>
-            </section>
+        <!-- SECTION: USERS -->
+        <section id="view-users" class="tab-view">
+            <div class="flex-between" style="margin-bottom: 30px;">
+                <h1>User Management</h1>
+                <input type="text" id="user-search-adm" placeholder="Search by name, email or UID..." class="btn btn-outline" style="text-align: left; width: 350px;">
+            </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>Investor</th><th>Balance</th><th>Total Inv.</th><th>KYC</th><th>Last Seen</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="user-list-adm"></tbody>
+                </table>
+            </div>
+        </section>
 
-            <!-- KYC Review Tab -->
-            <section id="tab-kyc" class="tab-content">
-                <h1 style="margin-bottom: 30px;">KYC Verification Queue</h1>
-                <div class="grid" id="kyc-grid" style="grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px;">
-                    <!-- KYC Cards -->
-                </div>
-            </section>
+        <!-- SECTION: WITHDRAWALS -->
+        <section id="view-withdrawals" class="tab-view">
+            <h1 style="margin-bottom: 30px;">Pending Payouts</h1>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>User Info</th><th>Bank Details</th><th>Amount</th><th>Validator</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="payout-list-adm"></tbody>
+                </table>
+            </div>
+        </section>
 
-            <!-- Settings Tab -->
-            <section id="tab-settings" class="tab-content">
-                <h1>Platform Controls</h1>
-                <div class="grid-2" style="margin-top: 30px;">
-                    <div class="card">
-                        <h3>Maintenance Mode</h3>
-                        <p style="margin: 15px 0; font-size: 14px; color: var(--muted2);">Toggling this will block all non-admin users from the application.</p>
-                        <button id="maint-toggle" class="btn btn-outline" style="width: 100%;"></button>
+        <!-- SECTION: KYC REVIEW -->
+        <section id="view-kyc" class="tab-view">
+            <h1 style="margin-bottom: 30px;">Compliance Queue</h1>
+            <div id="kyc-grid-adm" class="grid-2">
+                <!-- KYC Cards Injected -->
+            </div>
+        </section>
+
+        <!-- SECTION: SUPPORT DESK -->
+        <section id="view-support" class="tab-view">
+            <h1 style="margin-bottom: 30px;">Support Command Center</h1>
+            <div class="support-container">
+                <div class="support-list" id="thread-list-adm">
+                    <!-- Threads Injected -->
+                </div>
+                <div class="support-chat">
+                    <div id="chat-header-adm" style="padding: 20px 25px; border-bottom: 1px solid var(--border); font-weight: 800; background: var(--bg3);">
+                        Select a conversation to start
                     </div>
-                    <div class="card">
-                        <h3>Global Bonuses</h3>
-                        <div class="auth-input-group" style="margin-top: 20px;">
-                            <label>Welcome Bonus (₦)</label>
-                            <input type="number" id="cfg-welcome" value="200000">
-                        </div>
-                        <button onclick="saveGlobalSettings()" class="btn btn-primary" style="width: 100%;">Save Configuration</button>
+                    <div id="chat-msgs-adm" style="flex:1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px;">
+                        <!-- Messages Injected -->
+                    </div>
+                    <div id="chat-input-area-adm" style="padding: 20px; background: var(--bg2); display: none;">
+                        <form id="chat-form-adm" class="flex" style="gap: 15px;">
+                            <input type="text" id="chat-input-adm" placeholder="Reply as Support Agent..." style="flex:1; background: var(--bg3); border:1px solid var(--border); padding: 14px; border-radius: 12px; color: white;">
+                            <button type="submit" class="btn btn-primary">Send Message</button>
+                        </form>
                     </div>
                 </div>
-            </section>
-        </main>
+            </div>
+        </section>
+
+        <!-- SECTION: BROADCAST -->
+        <section id="view-broadcast" class="tab-view">
+            <h1 style="margin-bottom: 30px;">Global Communications</h1>
+            <div class="card" style="max-width: 600px;">
+                <h3 style="margin-bottom: 25px;">Send Global Notification</h3>
+                <div class="auth-input-group">
+                    <label>Broadcast Title</label>
+                    <input type="text" id="b-title" placeholder="e.g. System Update">
+                </div>
+                <div class="auth-input-group">
+                    <label>Message Content</label>
+                    <textarea id="b-msg" style="width:100%; height: 150px; background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; color: white; padding: 15px; font-family: inherit;"></textarea>
+                </div>
+                <div class="auth-input-group">
+                    <label>Alert Type</label>
+                    <select id="b-type">
+                        <option value="info">Information (Blue)</option>
+                        <option value="success">Success (Green)</option>
+                        <option value="warning">Alert (Gold)</option>
+                        <option value="error">Critical (Red)</option>
+                    </select>
+                </div>
+                <button id="send-broadcast" class="btn btn-primary" style="width: 100%;">Dispatch to All Users</button>
+            </div>
+        </section>
+
+        <!-- SECTION: SETTINGS -->
+        <section id="view-settings" class="tab-view">
+            <h1 style="margin-bottom: 30px;">Platform Configuration</h1>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>System Availability</h3>
+                    <div class="flex-between" style="margin: 25px 0;">
+                        <span>Maintenance Mode</span>
+                        <button id="toggle-maint-adm" class="btn btn-outline" style="min-height: 40px; padding: 0 20px;"></button>
+                    </div>
+                    <div class="auth-input-group">
+                        <label>Expected Uptime Text</label>
+                        <input type="text" id="maint-uptime" placeholder="e.g. 4:00 PM today">
+                    </div>
+                    <button id="save-maint" class="btn btn-primary" style="width: 100%;">Update Status</button>
+                </div>
+                <div class="card">
+                    <h3>Platform Rates</h3>
+                    <div class="auth-input-group">
+                        <label>Welcome Bonus (₦)</label>
+                        <input type="number" id="cfg-welcome">
+                    </div>
+                    <div class="auth-input-group">
+                        <label>Referral Bonus (₦)</label>
+                        <input type="number" id="cfg-referral">
+                    </div>
+                    <button id="save-rates" class="btn btn-gold" style="width: 100%;">Save Global Config</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal for Manual Adjustments -->
+    <div id="adj-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 id="adj-title">Adjust Balance</h3>
+            <p id="adj-user" style="font-size: 13px; margin: 10px 0 25px;"></p>
+            <div class="auth-input-group">
+                <label>Amount (₦)</label>
+                <input type="number" id="adj-amt" placeholder="Enter amount">
+            </div>
+            <div class="auth-input-group">
+                <label>Description (User will see this)</label>
+                <input type="text" id="adj-desc" placeholder="e.g. Portfolio Correction">
+            </div>
+            <div class="grid-2">
+                <button class="btn btn-outline" onclick="closeAdj()">Cancel</button>
+                <button id="adj-confirm-btn" class="btn btn-primary">Apply Update</button>
+            </div>
+        </div>
     </div>
 
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { auth, db, ADMIN_EMAIL, fmtN, toast } from './firebase-config.js';
+        import { auth, db, ADMIN_EMAIL, fmtN, timeAgo, requireAdmin, updateWallet, logTransaction, badge } from './firebase-config.js';
+        import { showToast, showConfirm, toggleLoader } from './components.js';
         import { 
-            collection, query, orderBy, limit, onSnapshot, getDocs, 
-            updateDoc, doc, addDoc, serverTimestamp, getDoc 
+            collection, query, where, orderBy, limit, onSnapshot, 
+            doc, getDoc, updateDoc, getDocs, setDoc, serverTimestamp, writeBatch 
         } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { showConfirm, toggleLoader } from './components.js';
 
-        // 6.1 MANDATORY ADMIN CHECK
-        auth.onAuthStateChanged(user => {
-            if (!user || user.email !== ADMIN_EMAIL) {
-                window.location.href = 'dashboard.html';
-            }
-        });
+        requireAdmin(async (admin, adminData) => {
+            let activeTab = 'overview';
+            let selectedThreadId = null;
+            let allUsers = [];
 
-        window.toggleSidebar = () => document.getElementById('sidebar').classList.toggle('open');
-
-        window.switchTab = (id) => {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.adm-nav-link').forEach(l => l.classList.remove('active'));
-            document.getElementById(`tab-${id}`).classList.add('active');
-            event.currentTarget.classList.add('active');
-            if(window.innerWidth < 1024) toggleSidebar();
-        };
-
-        // 1. Stats & Feed
-        onSnapshot(collection(db, "users"), snap => {
-            let totalBal = 0, totalInv = 0;
-            snap.docs.forEach(d => {
-                const u = d.data();
-                totalBal += (u.balance || 0);
-                totalInv += (u.totalInvested || 0);
+            // --- 1. TAB CONTROLLER ---
+            const switchTab = (id) => {
+                document.querySelectorAll('.tab-view').forEach(v => v.classList.remove('active'));
+                document.querySelectorAll('.adm-nav-item').forEach(i => i.classList.remove('active'));
+                document.getElementById(`view-${id}`).classList.add('active');
+                document.querySelector(`[data-tab="${id}"]`).classList.add('active');
+                activeTab = id;
+                if(window.innerWidth < 1024) toggleSidebar();
+            };
+            document.querySelectorAll('.adm-nav-item').forEach(item => {
+                item.onclick = () => switchTab(item.dataset.tab);
             });
-            document.getElementById('adm-total-users').innerText = snap.size;
-            document.getElementById('adm-total-bal').innerText = fmtN(totalBal);
-            document.getElementById('adm-total-invested').innerText = fmtN(totalInv);
-        });
 
-        // 2. Withdrawal Management
-        onSnapshot(query(collection(db, "withdrawals"), where("status", "==", "pending"), orderBy("createdAt", "desc")), snap => {
-            const body = document.getElementById('payout-body');
-            body.innerHTML = snap.docs.map(docSnap => {
-                const w = docSnap.data();
-                return `
+            window.toggleSidebar = () => document.getElementById('sidebar').classList.toggle('open');
+
+            // --- 2. REAL-TIME CORE STATS ---
+            onSnapshot(collection(db, "users"), snap => {
+                allUsers = snap.docs.map(d => d.data());
+                const totalLiq = allUsers.reduce((s, u) => s + (u.balance || 0), 0);
+                const totalInv = allUsers.reduce((s, u) => s + (u.totalInvested || 0), 0);
+                const totalEarned = allUsers.reduce((s, u) => s + (u.totalEarned || 0), 0);
+                const kycCount = allUsers.filter(u => u.kycStatus === 'verified').length;
+
+                document.getElementById('stat-liq').innerText = fmtN(totalLiq);
+                document.getElementById('stat-inv').innerText = fmtN(totalInv);
+                document.getElementById('stat-users').innerText = snap.size.toLocaleString();
+                document.getElementById('stat-profit').innerText = fmtN(totalEarned);
+                document.getElementById('stat-kyc').innerText = Math.round((kycCount/snap.size)*100) + '%';
+                
+                renderUsers(); // Refresh management list
+            });
+
+            // --- 3. USER MANAGEMENT ---
+            function renderUsers() {
+                const search = document.getElementById('user-search-adm').value.toLowerCase();
+                const body = document.getElementById('user-list-adm');
+                
+                const filtered = allUsers.filter(u => 
+                    u.displayName.toLowerCase().includes(search) || 
+                    u.email.toLowerCase().includes(search) || 
+                    u.uid.includes(search)
+                );
+
+                body.innerHTML = filtered.map(u => `
                     <tr>
-                        <td>UID: ${w.uid.substring(0,8)}</td>
                         <td>
-                            <b>${w.bank}</b><br>
-                            <span class="gold-text" style="font-family:monospace; font-size:15px;">${w.accountNumber}</span><br>
-                            <small>${w.accountName}</small>
+                            <b>${u.displayName}</b><br>
+                            <small style="opacity:0.6">${u.email}</small>
                         </td>
-                        <td style="font-weight:900; font-size:16px;">${fmtN(w.amount)}</td>
-                        <td><small style="font-family:monospace;">${w.code}</small></td>
+                        <td style="font-weight:800; color:var(--blue3)">${fmtN(u.balance)}</td>
+                        <td>${fmtN(u.totalInvested)}</td>
+                        <td><span class="badge ${badge(u.kycStatus)}">${u.kycStatus}</span></td>
+                        <td>${timeAgo(u.lastSeen)}</td>
                         <td>
-                            <div class="flex" style="gap:10px;">
-                                <button onclick="approveW('${docSnap.id}')" class="btn btn-primary" style="padding:8px 15px; background:var(--green); font-size:11px;">Approve</button>
-                                <button onclick="declineW('${docSnap.id}', '${w.uid}', ${w.amount})" class="btn btn-outline" style="padding:8px 15px; border-color:var(--red); color:var(--red); font-size:11px;">Decline</button>
-                            </div>
+                            <button onclick="openAdj('${u.uid}', '${u.displayName}', 'credit')" class="btn btn-outline" style="min-height:32px; padding:0 10px; font-size:11px; border-color:var(--green); color:var(--green);">Credit</button>
+                            <button onclick="openAdj('${u.uid}', '${u.displayName}', 'debit')" class="btn btn-outline" style="min-height:32px; padding:0 10px; font-size:11px; border-color:var(--red); color:var(--red);">Debit</button>
                         </td>
                     </tr>
-                `;
-            }).join('');
-        });
+                `).join('');
+            }
+            document.getElementById('user-search-adm').oninput = renderUsers;
 
-        window.approveW = async (id) => {
-            showConfirm({
-                title: "Complete Payout",
-                message: "Confirm that you have manually transferred the funds to the user's bank account. This will mark the request as success.",
-                onConfirm: async () => {
-                    await updateDoc(doc(db, "withdrawals", id), { status: "completed", processedAt: serverTimestamp() });
-                    toast("Withdrawal approved", "success");
+            // Balance adjustment logic
+            let adjUser = null, adjType = 'credit';
+            window.openAdj = (uid, name, type) => {
+                adjUser = uid; adjType = type;
+                document.getElementById('adj-title').innerText = type === 'credit' ? 'Manual Credit' : 'Manual Debit';
+                document.getElementById('adj-user').innerText = `Target User: ${name}`;
+                document.getElementById('adj-modal').style.display = 'flex';
+            };
+            window.closeAdj = () => document.getElementById('adj-modal').style.display = 'none';
+
+            document.getElementById('adj-confirm-btn').onclick = async () => {
+                const amt = parseFloat(document.getElementById('adj-amt').value);
+                const desc = document.getElementById('adj-desc').value;
+                if(!amt || !desc) return showToast("Enter amount and reason", "warning");
+
+                toggleLoader(event.target, true);
+                try {
+                    await updateWallet(adjUser, amt, adjType, {
+                        type: adjType === 'credit' ? 'bonus' : 'withdrawal',
+                        description: `Admin Adj: ${desc}`,
+                        status: 'completed'
+                    });
+                    showToast("User balance updated", "success");
+                    closeAdj();
+                } catch(e) { showToast(e, "error"); }
+                toggleLoader(event.target, false, "Apply Update");
+            };
+
+            // --- 4. WITHDRAWALS ---
+            onSnapshot(query(collection(db, "withdrawals"), orderBy("createdAt", "desc")), snap => {
+                const pending = snap.docs.filter(d => d.data().status === 'pending');
+                document.getElementById('badge-w').innerText = pending.length;
+                document.getElementById('stat-pend-w').innerText = fmtN(pending.reduce((s, d) => s + d.data().amount, 0));
+
+                const body = document.getElementById('payout-body'); // wait, body ID is payout-list-adm
+                document.getElementById('payout-list-adm').innerHTML = snap.docs.map(docSnap => {
+                    const w = docSnap.data();
+                    const isPending = w.status === 'pending';
+                    return `
+                        <tr style="opacity: ${isPending ? 1 : 0.6}">
+                            <td>
+                                <b>UID: ${w.uid.substring(0,8)}</b><br>
+                                <small>${timeAgo(w.createdAt)}</small>
+                            </td>
+                            <td>
+                                <div style="font-weight:700;">${w.bankName}</div>
+                                <div style="font-family:monospace; color:var(--gold); font-size:16px;">${w.accountNumber}</div>
+                                <small>${w.accountName}</small>
+                            </td>
+                            <td style="font-weight:900; font-size:16px;">${fmtN(w.amount)}</td>
+                            <td><small style="font-family:monospace; opacity:0.6">${w.code}</small></td>
+                            <td>
+                                ${isPending ? `
+                                    <div class="flex" style="gap:8px;">
+                                        <button onclick="approveW('${docSnap.id}')" class="btn btn-primary" style="background:var(--green); min-height:36px; font-size:12px;">Approve</button>
+                                        <button onclick="declineW('${docSnap.id}', '${w.uid}', ${w.amount})" class="btn btn-outline" style="border-color:var(--red); color:var(--red); min-height:36px; font-size:12px;">Decline</button>
+                                    </div>
+                                ` : `<span class="badge ${badge(w.status)}">${w.status}</span>`}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            });
+
+            window.approveW = (id) => {
+                showConfirm({
+                    title: "Confirm Payout",
+                    message: "Have you manually sent the funds to the user's bank account? This marks the request as completed.",
+                    onConfirm: async () => {
+                        await updateDoc(doc(db, "withdrawals", id), { status: "completed", processedAt: serverTimestamp() });
+                        showToast("Withdrawal completed", "success");
+                    }
+                });
+            };
+
+            window.declineW = (id, uid, amt) => {
+                const reason = prompt("Enter reason for rejection (This will be shown to the user):");
+                if(!reason) return;
+
+                showConfirm({
+                    title: "Decline & Refund?",
+                    message: "The user will be automatically refunded the withdrawal amount.",
+                    onConfirm: async () => {
+                        await updateDoc(doc(db, "withdrawals", id), { status: "declined", declineReason: reason });
+                        await updateWallet(uid, amt, 'credit', {
+                            type: 'return',
+                            description: `Refund: Declined Withdrawal (${reason})`,
+                            status: 'completed'
+                        });
+                        showToast("Withdrawal rejected and refunded", "warning");
+                    }
+                });
+            };
+
+            // --- 5. KYC QUEUE ---
+            onSnapshot(collection(db, "kyc"), snap => {
+                const pending = snap.docs.filter(d => d.data().status === 'pending');
+                document.getElementById('badge-k').innerText = pending.length;
+
+                document.getElementById('kyc-grid-adm').innerHTML = pending.map(docSnap => {
+                    const k = docSnap.data();
+                    return `
+                        <div class="card reveal">
+                            <div class="flex-between">
+                                <div><h4 style="font-size:18px;">${k.fullName}</h4><p class="text-micro">${k.idType.toUpperCase()}: ${k.idNumber}</p></div>
+                                <span class="badge badge-warning">PENDING</span>
+                            </div>
+                            <div class="grid-2" style="margin-top:20px;">
+                                <div><small class="text-micro">ID FRONT</small><img src="${k.imgFront}" class="kyc-img" onclick="window.open(this.src)"></div>
+                                <div><small class="text-micro">SELFIE</small><img src="${k.imgSelfie}" class="kyc-img" onclick="window.open(this.src)"></div>
+                            </div>
+                            <div class="grid-2" style="margin-top:25px;">
+                                <button onclick="verifyKYC('${k.uid}', 'verified')" class="btn btn-primary" style="background:var(--green)">Verify Account</button>
+                                <button onclick="verifyKYC('${k.uid}', 'rejected')" class="btn btn-outline" style="color:var(--red); border-color:var(--red)">Reject</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            });
+
+            window.verifyKYC = async (uid, status) => {
+                let reason = "";
+                if(status === 'rejected') {
+                    reason = prompt("Reason for rejection:");
+                    if(!reason) return;
                 }
-            });
-        };
 
-        window.declineW = async (id, uid, amt) => {
-            const reason = prompt("Reason for decline (User will be refunded):");
-            if (!reason) return;
-            
-            toggleLoader(true);
-            const userRef = doc(db, "users", uid);
-            const userSnap = await getDoc(userRef);
-            
-            await updateDoc(userRef, { 
-                balance: userSnap.data().balance + amt,
-                totalWithdrawn: userSnap.data().totalWithdrawn - amt
-            });
-            
-            await updateDoc(doc(db, "withdrawals", id), { status: "declined", declineReason: reason });
-            
-            await addDoc(collection(db, "transactions"), {
-                uid, amount: amt, type: "refund", description: `Withdrawal Declined: ${reason}`,
-                status: "completed", createdAt: serverTimestamp()
-            });
+                await updateDoc(doc(db, "users", uid), { kycStatus: status });
+                await updateDoc(doc(db, "kyc", uid), { status: status, rejectReason: reason, reviewedAt: serverTimestamp() });
+                
+                await setDoc(doc(collection(db, "notifications")), {
+                    uid, 
+                    title: status === 'verified' ? "Identity Verified! ✅" : "KYC Rejected ❌",
+                    message: status === 'verified' ? "Your account is now fully verified. Payout limits have been increased." : `Your documents were rejected: ${reason}. Please resubmit clear photos.`,
+                    type: status === 'verified' ? "success" : "error",
+                    read: false,
+                    createdAt: serverTimestamp()
+                });
 
-            toggleLoader(false);
-            toast("Withdrawal declined and refunded", "warning");
-        };
+                showToast(`KYC ${status === 'verified' ? 'Approved' : 'Rejected'}`, "success");
+            };
 
-        // 3. KYC Review
-        onSnapshot(query(collection(db, "kyc"), where("status", "==", "pending")), snap => {
-            const grid = document.getElementById('kyc-grid');
-            grid.innerHTML = snap.docs.map(docSnap => {
-                const k = docSnap.data();
-                return `
-                    <div class="card">
-                        <div class="flex" style="gap:15px; margin-bottom:20px;">
-                            <div style="width:40px; height:40px; border-radius:50%; background:var(--blue); display:flex; align-items:center; justify-content:center;">${k.idType[0].toUpperCase()}</div>
-                            <div><b>${k.idType.toUpperCase()}</b><br><small>${k.idNumber}</small></div>
+            // --- 6. SUPPORT COMMAND CENTER ---
+            onSnapshot(query(collection(db, "support"), orderBy("updatedAt", "desc")), snap => {
+                const unread = snap.docs.filter(d => d.data().unreadAdmin).length;
+                document.getElementById('badge-s').innerText = unread;
+
+                document.getElementById('thread-list-adm').innerHTML = snap.docs.map(docSnap => {
+                    const t = docSnap.data();
+                    return `
+                        <div class="thread-item ${t.unreadAdmin ? 'unread' : ''} ${selectedThreadId === docSnap.id ? 'active' : ''}" onclick="loadChat('${docSnap.id}', '${t.userName}')">
+                            <div class="flex-between">
+                                <b style="color:white;">${t.userName}</b>
+                                <small style="font-size:9px; opacity:0.6;">${timeAgo(t.updatedAt)}</small>
+                            </div>
+                            <p style="font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:5px;">${t.lastMessage}</p>
                         </div>
-                        <p style="font-size:12px; color:var(--muted2); margin-bottom:20px;">Submitted: ${k.submittedAt?.toDate().toLocaleString()}</p>
-                        <div class="grid-2">
-                            <button onclick="verifyKYC('${k.uid}', true)" class="btn btn-primary" style="background:var(--green);">Approve</button>
-                            <button onclick="verifyKYC('${k.uid}', false)" class="btn btn-outline" style="color:var(--red);">Reject</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                    `;
+                }).join('');
+            });
+
+            window.loadChat = (uid, name) => {
+                selectedThreadId = uid;
+                document.getElementById('chat-header-adm').innerText = `Chat with ${name}`;
+                document.getElementById('chat-input-area-adm').style.display = 'block';
+                
+                // Clear unread
+                updateDoc(doc(db, "support", uid), { unreadAdmin: false });
+
+                const qMsg = query(collection(db, "support", uid, "messages"), orderBy("createdAt", "asc"));
+                onSnapshot(qMsg, snap => {
+                    if(selectedThreadId !== uid) return;
+                    const cont = document.getElementById('chat-msgs-adm');
+                    cont.innerHTML = snap.docs.map(mDoc => {
+                        const m = mDoc.data();
+                        const isAdm = m.isAdmin;
+                        return `
+                            <div style="max-width:85%; align-self: ${isAdm ? 'flex-end' : 'flex-start'}; background: ${isAdm ? 'var(--blue)' : 'var(--bg3)'}; padding: 12px 16px; border-radius: 12px; font-size:14px; position:relative;">
+                                ${m.text}
+                            </div>
+                        `;
+                    }).join('');
+                    cont.scrollTop = cont.scrollHeight;
+                });
+            };
+
+            document.getElementById('chat-form-adm').onsubmit = async (e) => {
+                e.preventDefault();
+                const input = document.getElementById('chat-input-adm');
+                if(!input.value.trim() || !selectedThreadId) return;
+
+                const text = input.value.trim();
+                input.value = "";
+
+                await addDoc(collection(db, "support", selectedThreadId, "messages"), {
+                    text, isAdmin: true, createdAt: serverTimestamp()
+                });
+
+                await updateDoc(doc(db, "support", selectedThreadId), {
+                    lastMessage: text,
+                    updatedAt: serverTimestamp(),
+                    unreadUser: true
+                });
+            };
+
+            // --- 7. BROADCAST ---
+            document.getElementById('send-broadcast').onclick = async () => {
+                const title = document.getElementById('b-title').value;
+                const msg = document.getElementById('b-msg').value;
+                const type = document.getElementById('b-type').value;
+
+                if(!title || !msg) return showToast("Missing content", "warning");
+
+                showConfirm({
+                    title: "Send Broadcast?",
+                    message: `Dispatching this alert to ${allUsers.length} users. This action is permanent.`,
+                    onConfirm: async () => {
+                        toggleLoader(event.target, true);
+                        const batch = writeBatch(db);
+                        allUsers.forEach(u => {
+                            const nRef = doc(collection(db, "notifications"));
+                            batch.set(nRef, {
+                                uid: u.uid, title, message: msg, type, read: false, createdAt: serverTimestamp()
+                            });
+                        });
+                        await batch.commit();
+                        showToast("Global Broadcast Dispatched!", "success");
+                        document.getElementById('b-title').value = "";
+                        document.getElementById('b-msg').value = "";
+                        toggleLoader(event.target, false, "Dispatch to All Users");
+                    }
+                });
+            };
+
+            // --- 8. SETTINGS ---
+            onSnapshot(doc(db, "settings", "global"), snap => {
+                const s = snap.data();
+                if(!s) return;
+                const mtBtn = document.getElementById('toggle-maint-adm');
+                mtBtn.innerText = s.maintenanceMode ? "OFFLINE: Enable Access" : "ONLINE: Enable Maintenance";
+                mtBtn.style.background = s.maintenanceMode ? "var(--green)" : "var(--red)";
+                mtBtn.style.color = "white";
+
+                document.getElementById('maint-uptime').value = s.expectedUptime || "";
+                document.getElementById('cfg-welcome').value = s.welcomeBonus || 200000;
+                document.getElementById('cfg-referral').value = s.referralBonus || 2000;
+            });
+
+            document.getElementById('save-maint').onclick = async () => {
+                const uptime = document.getElementById('maint-uptime').value;
+                await updateDoc(doc(db, "settings", "global"), { expectedUptime: uptime });
+                showToast("System uptime updated");
+            };
+
+            document.getElementById('toggle-maint-adm').onclick = async () => {
+                const s = (await getDoc(doc(db, "settings", "global"))).data();
+                await updateDoc(doc(db, "settings", "global"), { maintenanceMode: !s.maintenanceMode });
+                showToast(`System is now ${!s.maintenanceMode ? 'OFFLINE' : 'ONLINE'}`, "warning");
+            };
+
+            document.getElementById('save-rates').onclick = async () => {
+                const w = parseFloat(document.getElementById('cfg-welcome').value);
+                const r = parseFloat(document.getElementById('cfg-referral').value);
+                await updateDoc(doc(db, "settings", "global"), { welcomeBonus: w, referralBonus: r });
+                showToast("Global rates updated");
+            };
+
+            // Global Tx Feed
+            onSnapshot(query(collection(db, "transactions"), orderBy("createdAt", "desc"), limit(15)), snap => {
+                document.getElementById('global-tx-feed').innerHTML = snap.docs.map(doc => {
+                    const t = doc.data();
+                    return `<tr><td>UID: ${t.uid.substring(0,8)}</td><td>${t.type.toUpperCase()}</td><td style="font-weight:800">${fmtN(t.amount)}</td><td><span class="badge ${badge(t.status)}">${t.status}</span></td><td>${timeAgo(t.createdAt)}</td></tr>`;
+                }).join('');
+            });
+
         });
-
-        window.verifyKYC = async (uid, approved) => {
-            await updateDoc(doc(db, "users", uid), { kycStatus: approved ? "verified" : "rejected" });
-            await updateDoc(doc(db, "kyc", uid), { status: approved ? "verified" : "rejected" });
-            toast(`KYC ${approved ? 'Verified' : 'Rejected'}`, approved ? "success" : "error");
-        };
-
-        // 4. Maintenance & Settings
-        onSnapshot(doc(db, "settings", "global"), snap => {
-            if(!snap.exists()) return;
-            const s = snap.data();
-            const btn = document.getElementById('maint-toggle');
-            btn.innerText = s.maintenanceMode ? "Disable Maintenance" : "Enable Maintenance";
-            btn.style.color = s.maintenanceMode ? "var(--green)" : "var(--red)";
-            btn.onclick = () => updateDoc(doc(db, "settings", "global"), { maintenanceMode: !s.maintenanceMode });
-        });
-
-        setTimeout(() => { document.getElementById('global-loader').style.display = 'none'; }, 1000);
     </script>
 </body>
 </html>
