@@ -1,103 +1,127 @@
-/* 
- * BluePay Authentication Controller
- * Production-Ready Login/Register Flow
+/**
+ * === BluePay Authentication Controller ===
+ * Responsibility: Secure Registration, Login, Google Auth, 
+ * Duplicate Prevention, and Admin Routing.
  */
 
-import { auth, googleProvider, syncUserIdentity, ADMIN_EMAIL, toast } from './firebase-config.js';
+import { 
+    auth, db, syncUserIdentity, ADMIN_EMAIL, 
+    googleProvider, notifyUser 
+} from './firebase-config.js';
 import { 
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword, 
     signInWithPopup, 
-    onAuthStateChanged,
-    sendEmailVerification
+    sendEmailVerification,
+    sendPasswordResetEmail,
+    updateProfile
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-const isMobile = window.innerWidth < 1024;
+import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { showToast } from './components.js';
 
 /**
- * Official Google Branding Button Handler
+ * Smart Redirector: Hard-coded Admin gate
  */
-export async function handleGoogleAuth() {
+export function routeUser(user) {
+    if (user.email.toLowerCase() === ADMIN_EMAIL) {
+        window.location.href = "admin-dashboard.html";
+    } else {
+        window.location.href = "dashboard.html";
+    }
+}
+
+/**
+ * Real-time Password Strength Evaluator
+ */
+export function checkPasswordStrength(password) {
+    let score = 0;
+    if (password.length >= 8) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+
+    const map = [
+        { label: "Very Weak", color: "var(--red)" },
+        { label: "Weak", color: "var(--orange)" },
+        { label: "Fair", color: "var(--blue2)" },
+        { label: "Strong", color: "var(--green)" },
+        { label: "Secure", color: "var(--green)" }
+    ];
+    return map[score];
+}
+
+/**
+ * Handle Official Google Sign-In (Fintech Standard)
+ */
+export async function handleGoogleSignIn() {
     try {
         const result = await signInWithPopup(auth, googleProvider);
         const userData = await syncUserIdentity(result.user);
         
-        toast(`Welcome back, ${userData.displayName}`, "success");
-        redirectUser(userData);
+        showToast(`Welcome, ${userData.displayName}`, "success");
+        setTimeout(() => routeUser(result.user), 1000);
     } catch (error) {
-        toast(error.message, "error");
+        if (error.code === 'auth/account-exists-with-different-credential') {
+            showToast("This email is already registered via password. Please login normally.", "warning");
+        } else {
+            showToast(error.message, "error");
+        }
     }
 }
 
 /**
- * Role-Based Routing
+ * Full Registration Flow
  */
-function redirectUser(userData) {
-    if (userData.email === ADMIN_EMAIL) {
-        window.location.href = 'admin-dashboard.html';
-    } else {
-        window.location.href = 'dashboard.html';
+export async function performRegistration(data) {
+    const { email, password, fullName, phone, referredBy } = data;
+
+    try {
+        // 1. Pre-check for duplicate email in Firestore
+        const q = query(collection(db, "users"), where("email", "==", email.toLowerCase()));
+        const exists = await getDocs(q);
+        if (!exists.empty) {
+            showToast("Email address already registered. Please login.", "warning");
+            return false;
+        }
+
+        // 2. Create Firebase Auth
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: fullName });
+
+        // 3. Sync to Firestore (Duplicate check inside handles race conditions)
+        await syncUserIdentity(cred.user, { fullName, phone, referredBy });
+
+        // 4. Verification
+        await sendEmailVerification(cred.user);
+        
+        showToast("Success! Please check your email for the verification link.", "success");
+        return true;
+    } catch (error) {
+        showToast(error.message, "error");
+        return false;
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const page = document.body.dataset.page;
-    
-    // 1. Login Form
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-password').value;
-            
-            try {
-                const res = await signInWithEmailAndPassword(auth, email, pass);
-                if (!res.user.emailVerified) {
-                    toast("Please verify your email address", "warning");
-                    // Optionally resend verification
-                }
-                const userData = await syncUserIdentity(res.user);
-                redirectUser(userData);
-            } catch (error) {
-                toast("Invalid login credentials", "error");
-            }
-        };
+/**
+ * Login Flow
+ */
+export async function performLogin(email, password) {
+    try {
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        const user = cred.user;
+
+        // Strict Verification Gate
+        if (!user.emailVerified && user.email !== ADMIN_EMAIL) {
+            showToast("Verification Required. A new link has been sent.", "warning");
+            await sendEmailVerification(user);
+            setTimeout(() => window.location.href = "verify.html", 1500);
+            return;
+        }
+
+        await syncUserIdentity(user);
+        showToast("Secure login successful.", "success");
+        setTimeout(() => routeUser(user), 1000);
+    } catch (error) {
+        showToast("Invalid credentials provided.", "error");
     }
-
-    // 2. Registration Form
-    const regForm = document.getElementById('reg-form');
-    if (regForm) {
-        regForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('reg-name').value;
-            const email = document.getElementById('reg-email').value;
-            const phone = document.getElementById('reg-phone').value;
-            const pass = document.getElementById('reg-password').value;
-            const confirm = document.getElementById('reg-confirm').value;
-
-            if (pass !== confirm) return toast("Passwords do not match", "error");
-            if (phone.length < 10) return toast("Invalid Nigerian phone number", "error");
-
-            try {
-                const res = await createUserWithEmailAndPassword(auth, email, pass);
-                await sendEmailVerification(res.user);
-                const userData = await syncUserIdentity(res.user, { displayName: name, phone });
-                toast("Account created! Verify your email to continue.", "success");
-                setTimeout(() => window.location.href = 'verify.html', 2000);
-            } catch (error) {
-                toast(error.message, "error");
-            }
-        };
-    }
-
-    // 3. Password Visibility Toggle
-    document.querySelectorAll('.eye-toggle').forEach(btn => {
-        btn.onclick = () => {
-            const input = btn.parentElement.querySelector('input');
-            input.type = input.type === 'password' ? 'text' : 'password';
-            btn.classList.toggle('fa-eye');
-            btn.classList.toggle('fa-eye-slash');
-        };
-    });
-});
+}
