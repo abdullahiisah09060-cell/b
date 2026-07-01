@@ -3,25 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 — Page Not Found</title>
+    <title>404 — Access Denied | BluePay</title>
     <link rel="stylesheet" href="global.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        .err-container { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
-        .err-code { font-size: clamp(120px, 15vw, 200px); font-weight: 900; line-height: 1; margin-bottom: 20px; letter-spacing: -10px; }
+        .err-wrap { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .err-code { font-size: 180px; font-weight: 900; line-height: 1; letter-spacing: -10px; margin-bottom: 20px; }
     </style>
 </head>
-<body>
-    <div id="global-loader"><div class="spinner"></div></div>
-    <div class="err-container">
-        <div class="reveal">
-            <h1 class="err-code grad-text">404</h1>
-            <h2 style="font-size: 32px; margin-bottom: 15px;">Lost in the Vault?</h2>
-            <p style="margin-bottom: 40px; max-width: 450px; margin-left: auto; margin-right: auto; color: var(--muted2);">The page you are looking for doesn't exist or has been moved to a more secure location.</p>
-            <div class="flex" style="gap: 15px; justify-content: center;">
-                <a href="index.html" class="btn btn-outline">Go Home</a>
-                <a href="dashboard.html" class="btn btn-primary">Dashboard</a>
-            </div>
+<body class="err-wrap">
+    <div class="reveal">
+        <h1 class="err-code grad-text">404</h1>
+        <h2 style="font-size: 32px; margin-bottom: 15px;">Lost in the Vault?</h2>
+        <p style="margin-bottom: 40px; color: var(--muted2); max-width: 450px;">The requested financial route does not exist or has been relocated for security purposes.</p>
+        <div class="flex-center" style="gap: 15px;">
+            <a href="index.html" class="btn btn-outline">Go Home</a>
+            <a href="dashboard.html" class="btn btn-primary">My Dashboard</a>
         </div>
     </div>
     <script src="app.js" type="module"></script>
