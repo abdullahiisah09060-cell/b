@@ -3,123 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fund Wallet — BluePay</title>
+    <title>Fund Wallet | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://js.paystack.co/v1/inline.js"></script>
 </head>
-<body data-page="dashboard">
+<body data-page="deposit">
     <div id="global-loader"><div class="spinner"></div></div>
     <aside class="sidebar"></aside>
     <header class="mobile-header"></header>
 
     <main class="main-content">
         <div class="reveal" style="margin-bottom: 40px;">
-            <h1>Add Funds</h1>
-            <p style="color: var(--muted2);">Instantly fund your investment wallet via Paystack.</p>
+            <h1>Fund Wallet</h1>
+            <p>Direct deposit via Paystack secure gateway.</p>
         </div>
 
         <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 30px;">
             <div class="card reveal">
                 <div class="auth-input-group" style="margin-bottom: 30px;">
                     <label>Amount to Deposit (₦)</label>
-                    <input type="number" id="dep-amount" placeholder="Min 1,000" min="1000" style="font-size: 24px; font-weight: 800; padding: 20px;">
+                    <input type="number" id="dep-amt" placeholder="10,000" style="font-size: 24px; font-weight: 800; padding: 20px;">
                 </div>
 
-                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 30px;">
-                    <button class="btn btn-outline" onclick="setAmt(5000)">₦5,000</button>
-                    <button class="btn btn-outline" onclick="setAmt(10000)">₦10,000</button>
-                    <button class="btn btn-outline" onclick="setAmt(50000)">₦50,000</button>
-                    <button class="btn btn-outline" onclick="setAmt(100000)">₦100,000</button>
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; margin-bottom: 40px;">
+                    <button class="btn btn-outline" style="min-height: 44px;" onclick="setD(5000)">₦5,000</button>
+                    <button class="btn btn-outline" style="min-height: 44px;" onclick="setD(20000)">₦20,000</button>
+                    <button class="btn btn-outline" style="min-height: 44px;" onclick="setD(50000)">₦50,000</button>
+                    <button class="btn btn-outline" style="min-height: 44px;" onclick="setD(100000)">₦100,000</button>
                 </div>
 
                 <button id="pay-btn" class="btn btn-primary" style="width: 100%; padding: 20px; font-size: 18px;">
-                    <i class="fa-solid fa-shield-check"></i> Secure Checkout
+                    <i class="fa-solid fa-shield-check"></i> Pay via Paystack
                 </button>
 
-                <div class="flex-center" style="margin-top: 25px; gap: 10px; opacity: 0.5;">
+                <div class="flex-center" style="margin-top: 30px; gap: 12px; opacity: 0.5;">
                     <img src="https://paystack.com/assets/img/login/paystack-logo.png" height="15" alt="Paystack">
-                    <span style="font-size: 12px; font-weight: 700;">SECURED BY PAYSTACK</span>
+                    <span style="font-size: 12px; font-weight: 700;">SECURED TRANSACTION</span>
                 </div>
             </div>
 
             <div class="card reveal" style="background: rgba(34,197,94,0.05); border-color: rgba(34,197,94,0.2);">
-                <h4 style="margin-bottom: 15px; color: var(--green);">Deposit Instructions</h4>
-                <ul style="font-size: 13px; color: var(--muted2); list-style: none;">
-                    <li style="margin-bottom: 12px;">1. Enter your desired deposit amount.</li>
-                    <li style="margin-bottom: 12px;">2. Complete payment via the Paystack gateway.</li>
-                    <li>3. Your balance updates immediately upon success.</li>
+                <h4 style="color: var(--green); margin-bottom: 15px;">Payment Guide</h4>
+                <ul style="font-size: 13px; list-style: none;" class="grid">
+                    <li>1. Enter amount (Min ₦1,000).</li>
+                    <li>2. Complete the secure Paystack checkout.</li>
+                    <li>3. Do not close the window until redirected.</li>
+                    <li>4. Funds are credited instantly.</li>
                 </ul>
-            </div>
-        </div>
-
-        <div class="card reveal" style="margin-top: 40px; padding: 0; overflow: hidden;">
-            <div style="padding: 20px; border-bottom: 1px solid var(--border);"><h3>Deposit History</h3></div>
-            <div id="dep-history" style="padding: 10px;">
-                <p style="text-align: center; padding: 30px; color: var(--muted2);">No deposits yet.</p>
             </div>
         </div>
     </main>
 
     <nav class="bottom-nav"></nav>
 
-    <script src="https://js.paystack.co/v1/inline.js"></script>
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { auth, db, toast, fmtN } from './firebase-config.js';
-        import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { toggleLoader } from './components.js';
+        import { auth, db, updateWallet, requireAuth, showToast } from './firebase-config.js';
+        import { initAppShell, toggleLoader } from './components.js';
+        import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        window.setAmt = (val) => document.getElementById('dep-amount').value = val;
+        requireAuth(user => {
+            initAppShell('deposit');
+            const btn = document.getElementById('pay-btn');
 
-        document.getElementById('pay-btn').onclick = () => {
-            const amt = parseFloat(document.getElementById('dep-amount').value);
-            if(!amt || amt < 1000) return toast("Minimum deposit is ₦1,000", "warning");
+            window.setD = (v) => document.getElementById('dep-amt').value = v;
 
-            const handler = PaystackPop.setup({
-                key: 'pk_test_914662bcd8cdc4c28bfbdeb8f48653dbf00c595a',
-                email: auth.currentUser.email,
-                amount: amt * 100,
-                currency: 'NGN',
-                callback: async (response) => {
-                    toggleLoader(true);
-                    try {
-                        await addDoc(collection(db, "transactions"), {
-                            uid: auth.currentUser.uid,
-                            amount: amt,
-                            type: "deposit",
-                            description: "Wallet Funding via Paystack",
-                            status: "completed",
-                            reference: response.reference,
-                            createdAt: serverTimestamp()
-                        });
-                        
-                        await updateDoc(doc(db, "users", auth.currentUser.uid), {
-                            balance: increment(amt),
-                            totalDeposited: increment(amt)
-                        });
+            btn.onclick = () => {
+                const amt = parseFloat(document.getElementById('dep-amt').value);
+                if (!amt || amt < 1000) return showToast("Minimum deposit is ₦1,000", "warning");
 
-                        toast("Deposit successful!", "success");
-                        document.getElementById('dep-amount').value = '';
-                    } catch (e) { toast("Error updating balance", "error"); }
-                    toggleLoader(false);
-                }
-            });
-            handler.openIframe();
-        };
+                toggleLoader(btn, true, "Initializing Gateway...");
 
-        const q = query(collection(db, "transactions"), where("uid", "==", auth.currentUser?.uid || "void"), where("type", "==", "deposit"), orderBy("createdAt", "desc"));
-        onSnapshot(q, (snap) => {
-            const cont = document.getElementById('dep-history');
-            if (snap.empty) return;
-            cont.innerHTML = snap.docs.map(doc => {
-                const d = doc.data();
-                return `
-                    <div class="flex-between" style="padding: 15px; border-bottom: 1px solid var(--border);">
-                        <div><p style="font-weight: 700;">${fmtN(d.amount)}</p><p style="font-size: 11px; color: var(--muted2);">via Paystack</p></div>
-                        <span class="badge badge-success">COMPLETED</span>
-                    </div>
-                `;
-            }).join('');
+                const handler = PaystackPop.setup({
+                    key: 'pk_test_914662bcd8cdc4c28bfbdeb8f48653dbf00c595a',
+                    email: user.email,
+                    amount: amt * 100, // Kobo
+                    currency: 'NGN',
+                    callback: async (response) => {
+                        // Logic: Record Deposit and Credit Balance
+                        try {
+                            await addDoc(collection(db, "deposits"), {
+                                uid: user.uid,
+                                amount: amt,
+                                reference: response.reference,
+                                status: "completed",
+                                createdAt: serverTimestamp()
+                            });
+
+                            await updateWallet(user.uid, amt, 'credit', {
+                                type: 'deposit',
+                                description: "Wallet Funding via Paystack",
+                                status: 'completed'
+                            });
+
+                            showToast("Deposit Successful!", "success");
+                            setTimeout(() => window.location.href = 'dashboard.html', 1500);
+                        } catch (e) { showToast("Error processing payment.", "error"); }
+                    },
+                    onClose: () => {
+                        toggleLoader(btn, false, "Pay via Paystack");
+                        showToast("Transaction cancelled", "info");
+                    }
+                });
+                handler.openIframe();
+            };
         });
     </script>
 </body>
