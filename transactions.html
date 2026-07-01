@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Activity Log | BluePay Vault</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Transaction History | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
@@ -14,49 +14,28 @@
 
     <main class="main-content">
         <div class="flex-between reveal" style="margin-bottom: 40px; flex-wrap: wrap; gap: 20px;">
-            <div>
-                <h1>Transaction History</h1>
-                <p>Complete record of your financial movements.</p>
-            </div>
-            <button id="btn-export" class="btn btn-outline" style="min-height: 40px; padding: 0 20px; font-size: 13px;">
-                <i class="fa-solid fa-file-csv"></i> Export CSV
-            </button>
+            <div><h1>Vault Activity</h1><p>Detailed log of all credits and debits.</p></div>
+            <button id="export-csv" class="btn btn-outline" style="min-height: 40px; font-size: 13px;"><i class="fa-solid fa-file-csv"></i> Export to CSV</button>
         </div>
 
         <div class="card reveal" style="margin-bottom: 30px; padding: 20px;">
-            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                <div class="auth-input-group" style="margin-bottom: 0;">
-                    <label>Search Description</label>
-                    <input type="text" id="tx-search" placeholder="Filter activity...">
-                </div>
-                <div class="auth-input-group" style="margin-bottom: 0;">
-                    <label>Filter Type</label>
-                    <select id="tx-filter">
-                        <option value="all">All Transactions</option>
-                        <option value="deposit">Deposits</option>
-                        <option value="withdrawal">Withdrawals</option>
-                        <option value="investment">Investments</option>
-                        <option value="daily_claim">ROI Claims</option>
-                        <option value="bonus">System Bonuses</option>
-                    </select>
-                </div>
+            <div class="grid" style="grid-template-columns: 2fr 1fr; gap: 15px;">
+                <input type="text" id="tx-search" class="auth-input-group" placeholder="Search description..." style="margin:0; padding:12px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; color:white;">
+                <select id="tx-filter" style="padding:0 15px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; color:white;">
+                    <option value="all">All Types</option>
+                    <option value="deposit">Deposits</option>
+                    <option value="withdrawal">Withdrawals</option>
+                    <option value="daily_claim">ROI Claims</option>
+                    <option value="bonus">Bonuses</option>
+                </select>
             </div>
         </div>
 
         <div class="card reveal" style="padding: 0; overflow: hidden;">
             <div class="table-wrapper">
-                <table id="tx-table-full">
-                    <thead>
-                        <tr>
-                            <th>Time & Date</th>
-                            <th>Description</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tx-body-full">
-                        <tr><td colspan="4" style="text-align: center; padding: 60px;"><div class="spinner" style="margin: 0 auto;"></div></td></tr>
-                    </tbody>
+                <table style="width: 100%;">
+                    <thead><tr><th>Date & Time</th><th>Activity</th><th>Amount</th><th>Status</th></tr></thead>
+                    <tbody id="tx-full-body"></tbody>
                 </table>
             </div>
         </div>
@@ -66,86 +45,40 @@
 
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { auth, db, fmtN, fmtDate, badge, requireAuth } from './firebase-config.js';
+        import { auth, db, fmtN, fmtDate, requireAuth } from './firebase-config.js';
         import { initAppShell, showToast } from './components.js';
         import { collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         requireAuth(user => {
             initAppShell('transactions');
             let allTx = [];
-            
-            const tbody = document.getElementById('tx-body-full');
-            const searchInput = document.getElementById('tx-search');
-            const filterSelect = document.getElementById('tx-filter');
 
-            // 1. Listen for all transactions
-            const q = query(collection(db, "transactions"), where("uid", "==", user.uid), orderBy("createdAt", "desc"));
-            onSnapshot(q, snap => {
-                allTx = snap.docs.map(doc => doc.data());
-                renderTx();
+            onSnapshot(query(collection(db, "transactions"), where("uid", "==", user.uid), orderBy("createdAt", "desc")), snap => {
+                allTx = snap.docs.map(d => d.data());
+                renderTable();
             });
 
-            function renderTx() {
-                const search = searchInput.value.toLowerCase();
-                const typeFilter = filterSelect.value;
+            function renderTable() {
+                const search = document.getElementById('tx-search').value.toLowerCase();
+                const type = document.getElementById('tx-filter').value;
+                const filtered = allTx.filter(tx => (type === 'all' || tx.type === type) && tx.description.toLowerCase().includes(search));
 
-                const filtered = allTx.filter(tx => {
-                    const matchesSearch = tx.description.toLowerCase().includes(search);
-                    const matchesType = typeFilter === 'all' || tx.type === typeFilter;
-                    return matchesSearch && matchesType;
-                });
-
-                if (filtered.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 60px; color: var(--muted);">No matching transactions found.</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = filtered.map(tx => {
+                document.getElementById('tx-full-body').innerHTML = filtered.map(tx => {
                     const isCredit = ["deposit", "bonus", "return", "daily_claim", "referral_bonus"].includes(tx.type);
-                    return `
-                        <tr>
-                            <td style="white-space: nowrap;">${fmtDate(tx.createdAt)}</td>
-                            <td>
-                                <p style="font-weight: 700; color: white;">${tx.description}</p>
-                                <p style="font-size: 11px; opacity: 0.7;">Ref: ${tx.uid.substring(0,8)}...</p>
-                            </td>
-                            <td style="font-weight: 800; color: ${isCredit ? 'var(--green)' : 'white'};">
-                                ${isCredit ? '+' : '-'}${fmtN(tx.amount)}
-                            </td>
-                            <td><span class="badge ${badge(tx.status)}">${tx.status}</span></td>
-                        </tr>
-                    `;
+                    return `<tr><td>${fmtDate(tx.createdAt)}</td><td><p style="font-weight:700; color:white;">${tx.description}</p><small style="opacity:0.5;">ID: ${tx.uid.substring(0,8)}</small></td><td style="font-weight:800; color:${isCredit ? 'var(--green)' : 'white'}">${isCredit ? '+' : '-'}${fmtN(tx.amount)}</td><td><span class="badge badge-success">${tx.status}</span></td></tr>`;
                 }).join('');
             }
 
-            // Debounced Search
-            let timer;
-            searchInput.oninput = () => {
-                clearTimeout(timer);
-                timer = setTimeout(renderTx, 300);
-            };
-            filterSelect.onchange = renderTx;
+            document.getElementById('tx-search').oninput = renderTable;
+            document.getElementById('tx-filter').onchange = renderTable;
 
-            // CSV Export
-            document.getElementById('btn-export').onclick = () => {
-                if (allTx.length === 0) return showToast("No data to export", "info");
-                
-                let csv = "Date,Description,Amount,Type,Status\n";
-                allTx.forEach(tx => {
-                    const date = tx.createdAt ? tx.createdAt.toDate().toISOString() : "";
-                    csv += `"${date}","${tx.description}","${tx.amount}","${tx.type}","${tx.status}"\n`;
-                });
-
+            document.getElementById('export-csv').onclick = () => {
+                let csv = "Date,Description,Amount,Status\n";
+                allTx.forEach(t => csv += `"${fmtDate(t.createdAt)}","${t.description}","${t.amount}","${t.status}"\n`);
                 const blob = new Blob([csv], { type: 'text/csv' });
                 const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.setAttribute('hidden', '');
-                a.setAttribute('href', url);
-                a.setAttribute('download', `BluePay_History_${Date.now()}.csv`);
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                showToast("History exported successfully!", "success");
+                const a = document.createElement('a'); a.href = url; a.download = `BluePay_History.csv`; a.click();
+                showToast("CSV Downloaded", "success");
             };
         });
     </script>
