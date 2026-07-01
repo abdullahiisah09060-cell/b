@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Inbox | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -11,65 +11,29 @@
     <div id="global-loader"><div class="spinner"></div></div>
     <aside class="sidebar"></aside>
     <header class="mobile-header"></header>
-
     <main class="main-content">
-        <div class="flex-between reveal" style="margin-bottom: 40px;">
-            <h1>Notifications</h1>
-            <button id="mark-all-read" class="btn btn-outline" style="min-height: 40px; font-size: 12px; padding: 0 15px;">Mark all read</button>
-        </div>
-
-        <div id="notif-list-full" class="grid reveal" style="gap: 15px;">
-            <div style="padding: 40px; text-align: center;"><div class="spinner" style="margin: 0 auto;"></div></div>
-        </div>
+        <div class="flex-between reveal" style="margin-bottom: 40px;"><h1>Notifications</h1><button id="mark-read" class="btn btn-outline" style="min-height: 40px; font-size: 13px;">Mark all read</button></div>
+        <div id="n-list" class="grid reveal" style="gap: 12px;"></div>
     </main>
-
     <nav class="bottom-nav"></nav>
-
     <script src="app.js" type="module"></script>
     <script type="module">
         import { auth, db, timeAgo, requireAuth } from './firebase-config.js';
         import { initAppShell } from './components.js';
         import { collection, query, where, orderBy, onSnapshot, updateDoc, doc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
         requireAuth(user => {
             initAppShell('dashboard');
-
-            const q = query(collection(db, "notifications"), where("uid", "==", user.uid), orderBy("createdAt", "desc"));
-            onSnapshot(q, snap => {
-                const cont = document.getElementById('notif-list-full');
-                if (snap.empty) {
-                    cont.innerHTML = `<div class="card" style="text-align:center; padding: 60px 0;"><i class="fa-solid fa-bell-slash" style="font-size:30px; opacity:0.2; margin-bottom:15px; display:block;"></i><p>Your inbox is empty.</p></div>`;
-                    return;
-                }
-                cont.innerHTML = snap.docs.map(docSnap => {
-                    const n = docSnap.data();
-                    let icon = "fa-bell", color = "var(--blue2)";
-                    if (n.type === "success") { icon = "fa-circle-check"; color = "var(--green)"; }
-                    if (n.type === "error") { icon = "fa-circle-xmark"; color = "var(--red)"; }
-                    
-                    return `
-                        <div class="card flex" style="gap: 20px; align-items: start; background: ${n.read ? 'var(--bg2)' : 'var(--bg3)'}; border-left: 4px solid ${n.read ? 'transparent' : 'var(--blue2)'}; cursor: pointer;" onclick="markRead('${docSnap.id}')">
-                            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; color: ${color}; font-size: 18px;"><i class="fa-solid ${icon}"></i></div>
-                            <div style="flex: 1;">
-                                <div class="flex-between"><h4 style="font-size: 15px;">${n.title}</h4><span style="font-size: 10px; font-weight: 700; opacity: 0.6;">${timeAgo(n.createdAt)}</span></div>
-                                <p style="font-size: 14px; margin-top: 5px; line-height: 1.5;">${n.message}</p>
-                            </div>
-                        </div>
-                    `;
+            onSnapshot(query(collection(db, "notifications"), where("uid", "==", user.uid), orderBy("createdAt", "desc")), snap => {
+                document.getElementById('n-list').innerHTML = snap.empty ? `<p style="text-align:center; padding:40px;">No alerts yet.</p>` : snap.docs.map(d => {
+                    const n = d.data();
+                    return `<div class="card flex" style="gap: 20px; align-items: start; background: ${n.read ? 'var(--bg2)' : 'var(--bg3)'}; border-left: 4px solid ${n.read ? 'transparent' : 'var(--blue2)'}; cursor: pointer;" onclick="markRead('${d.id}')"><div><h4 style="font-size: 15px;">${n.title}</h4><p style="font-size: 13px; margin-top: 5px;">${n.message}</p><p style="font-size: 10px; margin-top: 10px; opacity: 0.5;">${timeAgo(n.createdAt)}</p></div></div>`;
                 }).join('');
             });
-
-            window.markRead = async (id) => {
-                await updateDoc(doc(db, "notifications", id), { read: true });
-            };
-
-            document.getElementById('mark-all-read').onclick = async () => {
-                const qUnread = query(collection(db, "notifications"), where("uid", "==", user.uid), where("read", "==", false));
-                const snap = await getDocs(qUnread);
-                if (snap.empty) return;
-                const batch = writeBatch(db);
-                snap.docs.forEach(d => batch.update(d.ref, { read: true }));
-                await batch.commit();
+            window.markRead = (id) => updateDoc(doc(db, "notifications", id), { read: true });
+            document.getElementById('mark-read').onclick = async () => {
+                const q = query(collection(db, "notifications"), where("uid", "==", user.uid), where("read", "==", false));
+                const snap = await getDocs(q); if(snap.empty) return;
+                const batch = writeBatch(db); snap.docs.forEach(d => batch.update(d.ref, { read: true })); await batch.commit();
             };
         });
     </script>
