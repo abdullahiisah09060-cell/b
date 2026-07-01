@@ -1,7 +1,6 @@
 /**
- * === BluePay App Controller ===
- * Responsibility: PWA Lifecycle, Real-time Dashboard Sync, 
- * Scroll Reveal Animations, and UI Initializers.
+ * === BluePay Main Application Controller ===
+ * Responsibility: App Lifecycle, Real-time Dashboard Sync, PWA registration.
  */
 
 import { auth, db } from './firebase-config.js';
@@ -9,7 +8,7 @@ import { onSnapshot, doc, collection, query, where } from "https://www.gstatic.c
 import { initAppShell } from './components.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. PWA Service Worker Registration
+    // 1. PWA Registration
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/service-worker.js')
@@ -18,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Fade Loader
+    // 2. Clear Global Loader
     const loader = document.getElementById('global-loader');
     if (loader) {
         setTimeout(() => {
@@ -27,43 +26,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 800);
     }
 
-    // 3. Scroll Reveal Engine
-    const observer = new IntersectionObserver((entries) => {
+    // 3. Intersection Observer for Page Transitions
+    const obs = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('revealed');
-                observer.unobserve(entry.target);
+                obs.unobserve(entry.target);
             }
         });
     }, { threshold: 0.1 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-
-    // 4. Global Auth State & Shared Listeners
+    // 4. Global Auth Watcher for Core UI
     auth.onAuthStateChanged(user => {
         if (user) {
-            startGlobalListeners(user.uid);
+            setupGlobalListeners(user.uid);
         }
     });
 });
 
 /**
- * Listeners for persistent shell elements (Notif counts, etc.)
+ * Dashboard Listener for Unread Alerts
  */
-function startGlobalListeners(uid) {
-    // Listen for unread notifications
-    const q = query(collection(db, "notifications"), where("uid", "==", uid), where("read", "==", false));
-    onSnapshot(q, (snap) => {
-        const dot = document.getElementById('shell-notif-dot');
+function setupGlobalListeners(uid) {
+    // Watch unread notifications for the dot
+    const qNotif = query(collection(db, "notifications"), where("uid", "==", uid), where("read", "==", false));
+    onSnapshot(qNotif, (snap) => {
+        const dot = document.getElementById('header-notif-dot');
         if (dot) dot.style.display = snap.empty ? 'none' : 'block';
     });
 
-    // Sync Avatar to shell
+    // Update Header Avatar
     onSnapshot(doc(db, "users", uid), (snap) => {
-        const data = snap.data();
-        const avatar = document.getElementById('shell-avatar');
-        if (avatar && data) {
-            avatar.innerText = data.displayName.split(' ').map(n => n[0]).join('').toUpperCase();
+        const u = snap.data();
+        const avatarEl = document.getElementById('header-avatar');
+        if (avatarEl && u) {
+            avatarEl.innerText = u.displayName.split(' ').map(n => n[0]).join('').toUpperCase();
         }
     });
 }
