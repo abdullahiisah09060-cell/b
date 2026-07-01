@@ -3,15 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Support — BluePay</title>
+    <title>Live Chat | BluePay Support</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        .chat-container { height: 60vh; display: flex; flex-direction: column; }
-        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
-        .msg { max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.4; }
-        .msg-agent { align-self: flex-start; background: var(--bg3); border: 1px solid var(--border); }
-        .msg-user { align-self: flex-end; background: var(--blue); color: white; }
+        .chat-frame { height: calc(100vh - 350px); display: flex; flex-direction: column; background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+        .chat-msgs { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
+        .msg { max-width: 80%; padding: 12px 16px; border-radius: 14px; font-size: 14px; line-height: 1.5; position: relative; }
+        .msg-user { align-self: flex-end; background: var(--blue); color: white; border-bottom-right-radius: 2px; }
+        .msg-agent { align-self: flex-start; background: var(--bg3); border: 1px solid var(--border); border-bottom-left-radius: 2px; }
+        .msg-time { font-size: 9px; opacity: 0.5; margin-top: 5px; display: block; text-align: right; }
+
+        .chip-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-bottom: 10px; }
+        .q-chip { background: var(--bg3); border: 1px solid var(--border); padding: 6px 16px; border-radius: 50px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .q-chip:hover { border-color: var(--blue2); background: var(--bg4); }
     </style>
 </head>
 <body data-page="support">
@@ -21,27 +26,36 @@
 
     <main class="main-content">
         <div class="reveal" style="margin-bottom: 30px;">
-            <h1>Help Center</h1>
-            <p style="color: var(--muted2);">Chat with your dedicated support agent.</p>
+            <h1>Support Center</h1>
+            <p>Connect with your assigned agent for real-time assistance.</p>
         </div>
 
-        <div class="card reveal" style="padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 75vh;">
+        <div class="card reveal" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
             <div class="flex-between" style="padding: 15px 25px; background: var(--bg3); border-bottom: 1px solid var(--border);">
-                <div class="flex" style="gap: 12px;">
-                    <div id="agent-icon" style="width: 40px; height: 40px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; font-weight: 800;">SA</div>
+                <div class="flex" style="gap: 15px;">
+                    <div id="agent-icon" style="width: 40px; height: 40px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; position: relative;">
+                        BP <div style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: var(--green); border-radius: 50%; border: 2px solid var(--bg3);"></div>
+                    </div>
                     <div>
-                        <h4 id="agent-name">Support Agent</h4>
-                        <p style="font-size: 11px; color: var(--green);">● Online</p>
+                        <h4 id="agent-name-head">Assigned Agent</h4>
+                        <p style="font-size: 11px; color: var(--green); font-weight: 700;">● Online & Ready</p>
                     </div>
                 </div>
             </div>
 
-            <div class="chat-messages" id="chat-box"></div>
+            <div class="chat-msgs" id="chat-box-main">
+                <div style="text-align: center; color: var(--muted2); font-size: 11px; margin: 20px 0;">Messages are end-to-end encrypted for your security.</div>
+            </div>
 
-            <div style="padding: 20px; border-top: 1px solid var(--border); background: var(--bg2);">
-                <form id="chat-form" class="flex" style="gap: 10px;">
-                    <input type="text" id="chat-input" placeholder="Type your message..." style="flex: 1; background: var(--bg3); border: 1px solid var(--border); padding: 12px; border-radius: 8px; color: white;">
-                    <button type="submit" class="btn btn-primary" style="padding: 12px 20px;"><i class="fa-solid fa-paper-plane"></i></button>
+            <div style="padding: 20px; background: var(--bg2); border-top: 1px solid var(--border);">
+                <div class="chip-scroll">
+                    <div class="q-chip" onclick="sendQuick('How long do withdrawals take?')">Withdrawal Time</div>
+                    <div class="q-chip" onclick="sendQuick('Tell me more about the Gold Plan')">Investment Help</div>
+                    <div class="q-chip" onclick="sendQuick('I have a problem with my KYC')">KYC Issue</div>
+                </div>
+                <form id="chat-form-main" class="flex" style="gap: 12px;">
+                    <input type="text" id="chat-input-main" placeholder="Type your message..." style="flex:1; background: var(--bg3); border: 1px solid var(--border); padding: 14px; border-radius: 12px; color: white; outline: none;">
+                    <button type="submit" class="btn btn-primary" style="padding: 0 20px;"><i class="fa-solid fa-paper-plane"></i></button>
                 </form>
             </div>
         </div>
@@ -51,37 +65,62 @@
 
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { auth, db, listenUser } from './firebase-config.js';
-        import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { auth, db, requireAuth } from './firebase-config.js';
+        import { initAppShell, showToast } from './components.js';
+        import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        listenUser(auth.currentUser?.uid || "", (user) => {
-            document.getElementById('agent-name').innerText = user.agentName || "Sarah Mitchell";
-            document.getElementById('agent-icon').innerText = (user.agentName || "SA").split(' ').map(n => n[0]).join('');
-        });
+        requireAuth(async user => {
+            initAppShell('support');
+            
+            // 1. Load Agent
+            const uSnap = await getDoc(doc(db, "users", user.uid));
+            const agentName = uSnap.data().agentName || "Sarah Mitchell";
+            document.getElementById('agent-name-head').innerText = agentName;
+            document.getElementById('agent-icon').innerText = agentName.split(' ').map(n => n[0]).join('');
 
-        const chatBox = document.getElementById('chat-box');
-        const q = query(collection(db, "support", auth.currentUser?.uid || "void", "messages"), orderBy("createdAt", "asc"));
-        
-        onSnapshot(q, (snap) => {
-            chatBox.innerHTML = snap.docs.map(doc => {
-                const m = doc.data();
-                return `<div class="msg ${m.isAdmin ? 'msg-agent' : 'msg-user'}">${m.text}</div>`;
-            }).join('');
-            chatBox.scrollTop = chatBox.scrollHeight;
-        });
-
-        document.getElementById('chat-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const input = document.getElementById('chat-input');
-            if (!input.value.trim()) return;
-
-            await addDoc(collection(db, "support", auth.currentUser.uid, "messages"), {
-                text: input.value,
-                isAdmin: false,
-                createdAt: serverTimestamp()
+            // 2. Chat Listener
+            const chatBox = document.getElementById('chat-box-main');
+            const q = query(collection(db, "support", user.uid, "messages"), orderBy("createdAt", "asc"));
+            
+            onSnapshot(q, snap => {
+                chatBox.innerHTML = snap.docs.map(docSnap => {
+                    const m = docSnap.data();
+                    const isMe = !m.isAdmin;
+                    const time = m.createdAt ? m.createdAt.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...';
+                    return `<div class="msg ${isMe ? 'msg-user' : 'msg-agent'}">${m.text}<span class="msg-time">${time}</span></div>`;
+                }).join('');
+                chatBox.scrollTop = chatBox.scrollHeight;
             });
-            input.value = "";
-        };
+
+            // 3. Send Logic
+            const sendMsg = async (text) => {
+                if(!text.trim()) return;
+                try {
+                    await addDoc(collection(db, "support", user.uid, "messages"), {
+                        text: text,
+                        isAdmin: false,
+                        senderName: user.displayName,
+                        createdAt: serverTimestamp()
+                    });
+                    // Mark as unread for admin
+                    await setDoc(doc(db, "support", user.uid), {
+                        lastMessage: text,
+                        updatedAt: serverTimestamp(),
+                        userName: user.displayName,
+                        unreadAdmin: true
+                    }, { merge: true });
+                } catch (e) { showToast("Message failed to send.", "error"); }
+            };
+
+            document.getElementById('chat-form-main').onsubmit = (e) => {
+                e.preventDefault();
+                const input = document.getElementById('chat-input-main');
+                sendMsg(input.value);
+                input.value = "";
+            };
+
+            window.sendQuick = (t) => sendMsg(t);
+        });
     </script>
 </body>
 </html>
