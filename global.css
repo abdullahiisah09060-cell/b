@@ -1,271 +1,132 @@
-/* 
- * BluePay Global Design System 
- * Optimized for Mobile-First, Tablet, and Desktop 
+/**
+ * BluePay Components Engine
+ * Responsible for Navigation Injection, Modal Builder, and Sidebar Control.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+import { auth, fmtN, ADMIN_EMAIL } from './firebase-config.js';
 
-:root {
-    /* Color Palette */
-    --bg: #06080f;
-    --bg2: #0b0f1a;
-    --bg3: #0f1422;
-    --bg4: #141928;
-    --blue: #1a56db;
-    --blue2: #3b82f6;
-    --blue3: #60a5fa;
-    --gold: #d4af37;
-    --gold2: #f0d878;
-    --goldd: #a8891f;
-    --text: #eef0f4;
-    --muted: #5e6980;
-    --muted2: #8896aa;
-    --green: #22c55e;
-    --red: #ef4444;
-    --orange: #f59e0b;
-    --purple: #a855f7;
-    --border: rgba(255, 255, 255, 0.08);
-    --border-gold: rgba(212, 175, 55, 0.2);
-    --border-blue: rgba(26, 86, 219, 0.25);
+/**
+ * Standard Navigation Links
+ */
+const NAV_LINKS = [
+  { id: 'dashboard', icon: 'fa-house', label: 'Home', url: 'dashboard.html' },
+  { id: 'deposit', icon: 'fa-wallet', label: 'Deposit', url: 'deposit.html' },
+  { id: 'invest', icon: 'fa-chart-line', label: 'Invest', url: 'invest.html' },
+  { id: 'withdraw', icon: 'fa-bank', label: 'Withdraw', url: 'withdraw.html' },
+  { id: 'buy-code', icon: 'fa-key', label: 'Validator', url: 'buy-code.html' },
+  { id: 'transactions', icon: 'fa-list-ul', label: 'History', url: 'transactions.html' },
+  { id: 'referrals', icon: 'fa-users', label: 'Referrals', url: 'referrals.html' },
+  { id: 'support', icon: 'fa-headset', label: 'Support', url: 'support.html' },
+  { id: 'profile', icon: 'fa-user-circle', label: 'Profile', url: 'profile.html' }
+];
 
-    /* Spacing & Sizing */
-    --radius: 16px;
-    --radius-s: 10px;
-    --radius-xs: 8px;
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    --shadow-l: 0 24px 64px rgba(0, 0, 0, 0.6);
-    --safe-area: 20px;
+/**
+ * Injects Sidebars and Bottom Navs into any page automatically
+ */
+export function initNavigation(activeId) {
+  const sidebar = document.querySelector('.sidebar');
+  const bottomNav = document.querySelector('.bottom-nav');
+  const mobileHeader = document.querySelector('.mobile-header');
+
+  // 1. Sidebar (Desktop & Tablet)
+  if (sidebar) {
+    sidebar.innerHTML = `
+      <div class="flex" style="gap: 12px; margin-bottom: 40px; padding-left: 10px;">
+        <div style="width: 35px; height: 35px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white;"></i></div>
+        <span style="font-size: 22px; font-weight: 900;">BluePay</span>
+      </div>
+      <nav style="flex: 1;">
+        ${NAV_LINKS.map(link => `
+          <a href="${link.url}" class="nav-item ${activeId === link.id ? 'active' : ''}" style="display:flex; align-items:center; gap:15px; padding:12px 18px; border-radius:12px; color:var(--muted2); font-weight:600; text-decoration:none; margin-bottom:4px; transition:0.2s;">
+            <i class="fa-solid ${link.icon}" style="width:20px; text-align:center;"></i> ${link.label}
+          </a>
+        `).join('')}
+      </nav>
+      <div style="padding-top: 20px; border-top: 1px solid var(--border);">
+        <button id="nav-logout" style="background:none; border:none; color:var(--red); font-weight:700; cursor:pointer; display:flex; align-items:center; gap:15px; padding:12px 18px; font-family:inherit; font-size:15px; width:100%;">
+          <i class="fa-solid fa-right-from-bracket"></i> Logout
+        </button>
+      </div>
+    `;
+  }
+
+  // 2. Bottom Nav (Mobile)
+  if (bottomNav) {
+    const mobileLinks = [NAV_LINKS[0], NAV_LINKS[2], NAV_LINKS[3], NAV_LINKS[7], NAV_LINKS[8]];
+    bottomNav.innerHTML = mobileLinks.map(link => `
+      <a href="${link.url}" class="b-nav-item ${activeId === link.id ? 'active' : ''}" style="display:flex; flex-direction:column; align-items:center; gap:4px; color:${activeId === link.id ? 'var(--blue2)' : 'var(--muted2)'}; text-decoration:none; font-size:10px; font-weight:700;">
+        <i class="fa-solid ${link.icon}" style="font-size:20px;"></i>
+        <span>${link.label}</span>
+      </a>
+    `).join('');
+  }
+
+  // 3. Mobile Header (Dynamic Notif Dot)
+  if (mobileHeader) {
+    mobileHeader.innerHTML = `
+      <div class="flex" style="gap: 10px;">
+        <div style="width: 32px; height: 32px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white; font-size: 14px;"></i></div>
+        <span style="font-size: 18px; font-weight: 900;">BluePay</span>
+      </div>
+      <a href="notifications.html" style="position: relative; color: var(--text);">
+        <i class="fa-solid fa-bell" style="font-size: 22px;"></i>
+        <div id="header-notif-dot" style="display:none; position:absolute; top:-2px; right:-2px; width:10px; height:10px; background:var(--red); border-radius:50%; border:2px solid var(--bg2);"></div>
+      </a>
+    `;
+  }
+
+  // Set Logout Trigger
+  const logoutBtn = document.getElementById('nav-logout');
+  if (logoutBtn) {
+    logoutBtn.onclick = () => auth.signOut().then(() => window.location.href = 'login.html');
+  }
 }
 
-/* Base Reset */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-    -webkit-tap-highlight-color: transparent;
+/**
+ * Standard Confirmation Modal
+ * Standardizes the entire app away from window.confirm()
+ */
+export function showConfirm({ title, message, confirmText = "Proceed", cancelText = "Cancel", onConfirm }) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.style.display = 'flex';
+  
+  overlay.innerHTML = `
+    <div class="modal-card">
+      <h3 style="font-size: 20px; margin-bottom: 12px;">${title}</h3>
+      <p style="color: var(--muted2); font-size: 14px; margin-bottom: 30px;">${message}</p>
+      <div class="grid-2">
+        <button class="btn btn-outline" id="modal-cancel">${cancelText}</button>
+        <button class="btn btn-primary" id="modal-confirm">${confirmText}</button>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(overlay);
+  
+  const cancel = overlay.querySelector('#modal-cancel');
+  const confirm = overlay.querySelector('#modal-confirm');
+  
+  const close = () => overlay.remove();
+  
+  cancel.onclick = close;
+  overlay.onclick = (e) => { if(e.target === overlay) close(); };
+  
+  confirm.onclick = () => {
+    onConfirm();
+    close();
+  };
 }
 
-html {
-    scroll-behavior: smooth;
-    height: -webkit-fill-available;
-}
-
-body {
-    background-color: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    line-height: 1.5;
-    overflow-x: hidden;
-    min-height: 100vh;
-    min-height: -webkit-fill-available;
-    -webkit-font-smoothing: antialiased;
-}
-
-/* --- Layout Systems --- */
-
-/* Sidebar (Desktop Only) */
-.sidebar {
-    width: 260px;
-    background: var(--bg2);
-    border-right: 1px solid var(--border);
-    padding: 30px 20px;
-    position: fixed;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    z-index: 1000;
-}
-
-/* Main Content Area */
-.main-content {
-    flex: 1;
-    margin-left: 260px;
-    padding: 40px;
-    max-width: 1400px;
-}
-
-/* Mobile Header (Mobile Only) */
-.mobile-header {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 70px;
-    background: rgba(11, 15, 26, 0.85);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-    padding: 0 var(--safe-area);
-    z-index: 1100;
-    align-items: center;
-    justify-content: space-between;
-}
-
-/* Bottom Nav (Mobile Only) */
-.bottom-nav {
-    display: none;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 75px;
-    background: rgba(11, 15, 26, 0.95);
-    backdrop-filter: blur(15px);
-    border-top: 1px solid var(--border);
-    padding-bottom: env(safe-area-inset-bottom);
-    z-index: 1100;
-    justify-content: space-around;
-    align-items: center;
-}
-
-/* --- Responsive Adaptations --- */
-@media (max-width: 1024px) {
-    .sidebar { display: none; }
-    .main-content { 
-        margin-left: 0; 
-        padding: 90px 20px 100px; /* Space for Header and Bottom Nav */
-    }
-    .mobile-header { display: flex; }
-    .bottom-nav { display: flex; }
-}
-
-/* Typography */
-h1, h2, h3, h4 {
-    font-weight: 800;
-    letter-spacing: -1px;
-    line-height: 1.2;
-}
-
-.grad-text {
-    background: linear-gradient(135deg, var(--blue3), var(--blue));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.gold-text {
-    background: linear-gradient(135deg, var(--gold2), var(--gold));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-/* Components */
-.card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 24px;
-    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card:hover {
-    border-color: var(--border-blue);
-    transform: translateY(-4px);
-}
-
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 16px 28px;
-    border-radius: var(--radius-s);
-    font-weight: 700;
-    font-size: 15px;
-    cursor: pointer;
-    border: none;
-    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    white-space: nowrap;
-}
-
-.btn-primary { background: var(--blue); color: white; }
-.btn-primary:hover { background: var(--blue2); transform: scale(1.02); }
-.btn-primary:active { transform: scale(0.98); }
-
-.btn-outline { 
-    background: transparent; 
-    border: 1px solid var(--border); 
-    color: var(--text); 
-}
-.btn-outline:hover { background: var(--bg3); border-color: var(--blue2); }
-
-/* Form Controls */
-.auth-input-group {
-    margin-bottom: 20px;
-    position: relative;
-}
-
-.auth-input-group label {
-    display: block;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--muted2);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.auth-input-group input, 
-.auth-input-group select, 
-.auth-input-group textarea {
-    width: 100%;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-s);
-    padding: 14px 16px;
-    color: var(--text);
-    font-size: 16px;
-    font-family: inherit;
-    transition: 0.2s;
-}
-
-.auth-input-group input:focus {
-    outline: none;
-    border-color: var(--blue2);
-    background: var(--bg4);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-}
-
-/* Modals & Toasts */
-.modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
-    z-index: 3000; display: none; align-items: center; justify-content: center;
-    padding: 20px;
-}
-
-.modal-content {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 32px;
-    width: 100%;
-    max-width: 450px;
-    animation: modalSlide 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-}
-
-@keyframes modalSlide {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Skeleton Loading */
-.skeleton {
-    background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-    border-radius: var(--radius-s);
-}
-
-@keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-
-/* Utilities */
-.flex-between { display: flex; align-items: center; justify-content: space-between; }
-.flex-center { display: flex; align-items: center; justify-content: center; }
-.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-
-@media (max-width: 600px) {
-    .grid-2 { grid-template-columns: 1fr; }
+/**
+ * Shared Loading State Handler
+ */
+export function toggleBtnLoading(btn, isLoading, originalHtml) {
+  if (isLoading) {
+    btn.disabled = true;
+    btn.innerHTML = `<div class="spinner"></div>`;
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
 }
