@@ -3,49 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Join BluePay — Claim ₦200k Bonus</title>
+    <title>Create Account | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 20px; background: radial-gradient(circle at top right, var(--gold-glow) 0%, transparent 40%); }
+        .strength-meter { height: 4px; width: 100%; background: var(--bg4); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+        .strength-bar { height: 100%; width: 0; transition: 0.3s ease; }
+        .google-btn { background: white !important; color: #1f2937 !important; border: 1px solid #e5e7eb !important; width: 100%; height: 52px; margin-bottom: 25px; display: flex; align-items: center; justify-content: center; gap: 12px; font-weight: 700; border-radius: 10px; cursor: pointer; }
+    </style>
 </head>
 <body data-page="register">
     <div id="global-loader"><div class="spinner"></div></div>
-    
-    <div class="flex-center" style="min-height: 100vh; padding: 40px 20px;">
-        <div class="card reveal" style="width: 100%; max-width: 480px; padding: 40px;">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h2 style="font-size: 32px;">Create Account</h2>
-                <p style="margin-top: 8px; color: var(--green); font-weight: 800;">Get ₦200,000 Bonus Instantly</p>
+
+    <div class="auth-page">
+        <div class="card reveal" style="width: 100%; max-width: 500px; padding: 40px;">
+            <div style="text-align: center; margin-bottom: 35px;">
+                <h2 style="font-size: 32px;">Join BluePay</h2>
+                <p style="color: var(--green); font-weight: 800; margin-top: 5px;">Get ₦200,000 Signup Bonus</p>
             </div>
 
-            <button onclick="handleGoogleAuth()" class="btn btn-outline" style="width: 100%; gap: 12px; background: white; color: black; border: 1px solid #ddd; margin-bottom: 25px;">
-                <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.712s.102-1.172.282-1.712V4.956H.957a8.996 8.996 0 0 0 0 8.088l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.582C13.463.891 11.426 0 9 0 5.482 0 2.443 2.048.957 4.956L3.964 7.29c.708-2.127 2.692-3.71 5.036-3.71z" fill="#EA4335"/></svg>
-                Sign up with Google
+            <button id="google-reg-btn" class="google-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Register with Google
             </button>
 
+            <div class="flex-center" style="margin-bottom: 25px; gap: 15px;">
+                <div style="flex: 1; height: 1px; background: var(--border);"></div>
+                <span style="font-size: 11px; font-weight: 800; color: var(--muted);">OR MANUALLY</span>
+                <div style="flex: 1; height: 1px; background: var(--border);"></div>
+            </div>
+
             <form id="reg-form">
-                <div class="auth-input-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="John Doe" required></div>
-                <div class="auth-input-group"><label>Email Address</label><input type="email" id="reg-email" placeholder="email@example.com" required></div>
-                <div class="auth-input-group"><label>Phone Number</label><input type="tel" id="reg-phone" placeholder="080 1234 5678" required></div>
                 <div class="auth-input-group">
-                    <label>Password</label>
-                    <input type="password" id="reg-password" placeholder="Min. 8 Characters" required>
-                    <i class="fa-solid fa-eye-slash eye-toggle" style="position: absolute; right: 15px; top: 42px; cursor: pointer;"></i>
+                    <label>Full Legal Name</label>
+                    <input type="text" id="reg-name" placeholder="First and Last Name" required minlength="5">
                 </div>
-                <div class="auth-input-group"><label>Confirm Password</label><input type="password" id="reg-confirm" required></div>
-                <div class="auth-input-group"><label>Referral Code (Optional)</label><input type="text" id="reg-referral"></div>
-                
-                <label class="flex" style="gap: 10px; margin-bottom: 25px; cursor: pointer; font-size: 13px;">
-                    <input type="checkbox" required> <span>I agree to the <a href="terms.html" class="gold-text">Terms of Service</a></span>
+                <div class="auth-input-group">
+                    <label>Email Address</label>
+                    <input type="email" id="reg-email" placeholder="investor@example.com" required>
+                </div>
+                <div class="auth-input-group">
+                    <label>Phone Number (Nigerian)</label>
+                    <input type="tel" id="reg-phone" placeholder="08012345678" required>
+                </div>
+                <div class="auth-input-group">
+                    <label>Create Password</label>
+                    <input type="password" id="reg-pass" placeholder="Min. 8 characters" required>
+                    <div class="strength-meter"><div id="strength-bar" class="strength-bar"></div></div>
+                    <p id="strength-text" style="font-size: 10px; margin-top: 5px; font-weight: 700;"></p>
+                </div>
+                <div class="auth-input-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="reg-confirm" placeholder="Repeat password" required>
+                </div>
+                <div class="auth-input-group">
+                    <label>Referral Code (Optional)</label>
+                    <input type="text" id="reg-ref" placeholder="CODE123">
+                </div>
+
+                <label class="flex" style="gap: 12px; margin-bottom: 30px; cursor: pointer; align-items: start;">
+                    <input type="checkbox" id="reg-terms" style="margin-top: 5px;" required>
+                    <span style="font-size: 13px; color: var(--muted2);">I agree to the <a href="terms.html" class="gold-text">Terms of Service</a> and <a href="privacy.html" class="gold-text">Privacy Policy</a>.</span>
                 </label>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+                <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%;">Create My Account</button>
             </form>
 
-            <p style="text-align: center; margin-top: 30px; font-size: 14px;">Existing User? <a href="login.html" style="font-weight: 800; color: var(--blue2);">Sign In</a></p>
+            <p style="text-align: center; margin-top: 30px; font-size: 14px;">Already have an account? <a href="login.html" style="color: var(--blue2); font-weight: 800;">Sign In</a></p>
         </div>
     </div>
 
-    <script src="auth.js" type="module"></script>
-    <script type="module">import { handleGoogleAuth } from './auth.js'; window.handleGoogleAuth = handleGoogleAuth;</script>
+    <script src="app.js" type="module"></script>
+    <script type="module">
+        import { performRegistration, handleGoogleSignIn, checkPasswordStrength } from './auth.js';
+        import { toggleLoader, showToast } from './components.js';
+
+        const regForm = document.getElementById('reg-form');
+        const passInput = document.getElementById('reg-pass');
+        const strengthBar = document.getElementById('strength-bar');
+        const strengthText = document.getElementById('strength-text');
+
+        // Real-time Strength Indicator
+        passInput.oninput = () => {
+            const val = passInput.value;
+            const res = checkPasswordStrength(val);
+            strengthBar.style.width = val ? (res.label === "Secure" ? "100%" : (res.label === "Strong" ? "75%" : (res.label === "Fair" ? "50%" : "25%"))) : "0";
+            strengthBar.style.background = res.color;
+            strengthText.innerText = val ? `Security Level: ${res.label}` : "";
+            strengthText.style.color = res.color;
+        };
+
+        regForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            const data = {
+                fullName: document.getElementById('reg-name').value,
+                email: document.getElementById('reg-email').value,
+                phone: document.getElementById('reg-phone').value,
+                password: passInput.value,
+                confirm: document.getElementById('reg-confirm').value,
+                referredBy: document.getElementById('reg-ref').value
+            };
+
+            // Enhanced Validation
+            if (data.password !== data.confirm) return showToast("Passwords do not match", "error");
+            if (data.password.length < 8) return showToast("Password is too short", "error");
+            if (!data.phone.startsWith('0') && !data.phone.startsWith('+234')) return showToast("Invalid Nigerian phone format", "warning");
+
+            toggleLoader(btn, true, "Create My Account");
+            const success = await performRegistration(data);
+            if (!success) toggleLoader(btn, false, "Create My Account");
+        };
+
+        document.getElementById('google-reg-btn').onclick = handleGoogleSignIn;
+    </script>
 </body>
 </html>
