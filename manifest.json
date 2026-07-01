@@ -1,10 +1,11 @@
 {
-  "name": "BluePay Investment",
+  "name": "BluePay Premium Investment",
   "short_name": "BluePay",
   "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#06080f",
   "theme_color": "#0b0f1a",
+  "description": "High-yield daily investment platform for Nigeria.",
   "orientation": "portrait",
   "icons": [
     {
