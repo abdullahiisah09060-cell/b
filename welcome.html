@@ -6,25 +6,96 @@
     <title>Welcome to BluePay 🎉</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .welcome-card { animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    </style>
 </head>
-<body data-page="login">
-    <div id="global-loader"><div class="spinner"></div></div>
-    <div class="flex-center" style="min-height: 100vh; padding: 20px;">
-        <div class="card reveal" style="width: 100%; max-width: 500px; text-align: center; padding: 60px 40px;">
-            <div style="width: 100px; height: 100px; background: var(--green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 35px; font-size: 50px; box-shadow: 0 0 40px rgba(34,197,94,0.3);">
-                <i class="fa-solid fa-check"></i>
-            </div>
-            <h2 style="font-size: 36px;">Verified!</h2>
-            <p style="margin: 15px 0 45px; color: var(--muted2);">Your digital portfolio is active. We've credited your wallet with your signup bonus.</p>
-            
-            <div style="background: rgba(26,86,219,0.1); border: 1px solid var(--border-blue); padding: 40px 20px; border-radius: 20px; margin-bottom: 45px;">
-                <p style="font-size: 12px; font-weight: 800; color: var(--muted2); text-transform: uppercase; margin-bottom: 10px;">Initial Balance</p>
-                <h1 class="grad-text" style="font-size: 56px;">₦200,000</h1>
-            </div>
-
-            <a href="dashboard.html" class="btn btn-primary" style="width: 100%;">Go to Dashboard</a>
+<body class="flex-center" style="min-height: 100vh; padding: 20px; background: radial-gradient(circle at center, var(--blue-glow) 0%, var(--bg) 100%);">
+    
+    <div class="card welcome-card" style="width: 100%; max-width: 500px; text-align: center; padding: 60px 40px;">
+        <div style="width: 100px; height: 100px; background: var(--green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 35px; font-size: 50px; box-shadow: 0 0 40px rgba(34,197,94,0.3);">
+            <i class="fa-solid fa-check"></i>
         </div>
+        <h2 style="font-size: 36px; margin-bottom: 12px;">Verified!</h2>
+        <p style="margin-bottom: 45px;">Your digital portfolio is active. We've credited your wallet with your initial bonus.</p>
+        
+        <div style="background: rgba(26,86,219,0.1); border: 2px dashed var(--blue2); padding: 40px 20px; border-radius: 20px; margin-bottom: 45px;">
+            <p class="text-micro" style="margin-bottom: 10px;">SIGNUP BONUS CREDITED</p>
+            <h1 id="bonus-amt" class="grad-text" style="font-size: 56px;">₦0</h1>
+        </div>
+
+        <a href="dashboard.html" class="btn btn-primary" style="width: 100%; padding: 20px;">Enter Dashboard</a>
     </div>
+
     <script src="app.js" type="module"></script>
+    <script type="module">
+        import { WELCOME_BONUS, fmtN } from './firebase-config.js';
+        import { animateValue } from './app.js';
+
+        window.onload = () => {
+            // Animate bonus number for premium feel
+            let current = 0;
+            const target = WELCOME_BONUS;
+            const timer = setInterval(() => {
+                current += 4000;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                document.getElementById('bonus-amt').innerText = fmtN(current).split('.')[0];
+            }, 20);
+        };
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to BluePay 🎉</title>
+    <link rel="stylesheet" href="global.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @keyframes pop { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .welcome-card { animation: pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    </style>
+</head>
+<body class="flex-center" style="min-height: 100vh; padding: 20px; background: radial-gradient(circle at center, var(--blue-glow) 0%, var(--bg) 100%);">
+    
+    <div class="card welcome-card" style="width: 100%; max-width: 500px; text-align: center; padding: 60px 40px;">
+        <div style="width: 100px; height: 100px; background: var(--green); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 35px; font-size: 50px; box-shadow: 0 0 40px rgba(34,197,94,0.3);">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <h2 style="font-size: 36px; margin-bottom: 12px;">Verified!</h2>
+        <p style="margin-bottom: 45px;">Your digital portfolio is active. We've credited your wallet with your initial bonus.</p>
+        
+        <div style="background: rgba(26,86,219,0.1); border: 2px dashed var(--blue2); padding: 40px 20px; border-radius: 20px; margin-bottom: 45px;">
+            <p class="text-micro" style="margin-bottom: 10px;">SIGNUP BONUS CREDITED</p>
+            <h1 id="bonus-amt" class="grad-text" style="font-size: 56px;">₦0</h1>
+        </div>
+
+        <a href="dashboard.html" class="btn btn-primary" style="width: 100%; padding: 20px;">Enter Dashboard</a>
+    </div>
+
+    <script src="app.js" type="module"></script>
+    <script type="module">
+        import { WELCOME_BONUS, fmtN } from './firebase-config.js';
+        import { animateValue } from './app.js';
+
+        window.onload = () => {
+            // Animate bonus number for premium feel
+            let current = 0;
+            const target = WELCOME_BONUS;
+            const timer = setInterval(() => {
+                current += 4000;
+                if (current >= target) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                document.getElementById('bonus-amt').innerText = fmtN(current).split('.')[0];
+            }, 20);
+        };
+    </script>
 </body>
 </html>
