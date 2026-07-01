@@ -2,124 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Chat | BluePay Support</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Live Chat | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        .chat-frame { height: calc(100vh - 350px); display: flex; flex-direction: column; background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-        .chat-msgs { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; scroll-behavior: smooth; }
-        .msg { max-width: 80%; padding: 12px 16px; border-radius: 14px; font-size: 14px; line-height: 1.5; position: relative; }
-        .msg-user { align-self: flex-end; background: var(--blue); color: white; border-bottom-right-radius: 2px; }
-        .msg-agent { align-self: flex-start; background: var(--bg3); border: 1px solid var(--border); border-bottom-left-radius: 2px; }
-        .msg-time { font-size: 9px; opacity: 0.5; margin-top: 5px; display: block; text-align: right; }
-
-        .chip-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; margin-bottom: 10px; }
-        .q-chip { background: var(--bg3); border: 1px solid var(--border); padding: 6px 16px; border-radius: 50px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: 0.2s; }
-        .q-chip:hover { border-color: var(--blue2); background: var(--bg4); }
+        .c-box { height: calc(100vh - 350px); display: flex; flex-direction: column; background: var(--bg2); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+        .c-msgs { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 12px; }
+        .m { max-width: 80%; padding: 12px 16px; border-radius: 14px; font-size: 14px; }
+        .m-u { align-self: flex-end; background: var(--blue); color: white; border-bottom-right-radius: 2px; }
+        .m-a { align-self: flex-start; background: var(--bg3); border: 1px solid var(--border); border-bottom-left-radius: 2px; }
     </style>
 </head>
 <body data-page="support">
     <div id="global-loader"><div class="spinner"></div></div>
     <aside class="sidebar"></aside>
     <header class="mobile-header"></header>
-
     <main class="main-content">
-        <div class="reveal" style="margin-bottom: 30px;">
-            <h1>Support Center</h1>
-            <p>Connect with your assigned agent for real-time assistance.</p>
-        </div>
-
-        <div class="card reveal" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-            <div class="flex-between" style="padding: 15px 25px; background: var(--bg3); border-bottom: 1px solid var(--border);">
-                <div class="flex" style="gap: 15px;">
-                    <div id="agent-icon" style="width: 40px; height: 40px; border-radius: 50%; background: var(--blue); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; position: relative;">
-                        BP <div style="position: absolute; bottom: 0; right: 0; width: 10px; height: 10px; background: var(--green); border-radius: 50%; border: 2px solid var(--bg3);"></div>
-                    </div>
-                    <div>
-                        <h4 id="agent-name-head">Assigned Agent</h4>
-                        <p style="font-size: 11px; color: var(--green); font-weight: 700;">● Online & Ready</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="chat-msgs" id="chat-box-main">
-                <div style="text-align: center; color: var(--muted2); font-size: 11px; margin: 20px 0;">Messages are end-to-end encrypted for your security.</div>
-            </div>
-
-            <div style="padding: 20px; background: var(--bg2); border-top: 1px solid var(--border);">
-                <div class="chip-scroll">
-                    <div class="q-chip" onclick="sendQuick('How long do withdrawals take?')">Withdrawal Time</div>
-                    <div class="q-chip" onclick="sendQuick('Tell me more about the Gold Plan')">Investment Help</div>
-                    <div class="q-chip" onclick="sendQuick('I have a problem with my KYC')">KYC Issue</div>
-                </div>
-                <form id="chat-form-main" class="flex" style="gap: 12px;">
-                    <input type="text" id="chat-input-main" placeholder="Type your message..." style="flex:1; background: var(--bg3); border: 1px solid var(--border); padding: 14px; border-radius: 12px; color: white; outline: none;">
-                    <button type="submit" class="btn btn-primary" style="padding: 0 20px;"><i class="fa-solid fa-paper-plane"></i></button>
+        <h1>Help Center</h1><p style="margin-bottom: 25px;">Assigned Agent: <b id="a-name">...</b></p>
+        <div class="c-box"><div class="c-msgs" id="c-msgs"></div>
+            <div style="padding: 20px; background: var(--bg3); border-top: 1px solid var(--border);">
+                <form id="c-form" class="flex" style="gap: 10px;">
+                    <input type="text" id="c-in" placeholder="Type message..." style="flex:1; background:var(--bg); border:1px solid var(--border); padding:12px; border-radius:10px; color:white;">
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i></button>
                 </form>
             </div>
         </div>
     </main>
-
     <nav class="bottom-nav"></nav>
-
     <script src="app.js" type="module"></script>
     <script type="module">
         import { auth, db, requireAuth } from './firebase-config.js';
-        import { initAppShell, showToast } from './components.js';
-        import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
+        import { initAppShell } from './components.js';
+        import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         requireAuth(async user => {
             initAppShell('support');
-            
-            // 1. Load Agent
-            const uSnap = await getDoc(doc(db, "users", user.uid));
-            const agentName = uSnap.data().agentName || "Sarah Mitchell";
-            document.getElementById('agent-name-head').innerText = agentName;
-            document.getElementById('agent-icon').innerText = agentName.split(' ').map(n => n[0]).join('');
-
-            // 2. Chat Listener
-            const chatBox = document.getElementById('chat-box-main');
-            const q = query(collection(db, "support", user.uid, "messages"), orderBy("createdAt", "asc"));
-            
-            onSnapshot(q, snap => {
-                chatBox.innerHTML = snap.docs.map(docSnap => {
-                    const m = docSnap.data();
-                    const isMe = !m.isAdmin;
-                    const time = m.createdAt ? m.createdAt.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...';
-                    return `<div class="msg ${isMe ? 'msg-user' : 'msg-agent'}">${m.text}<span class="msg-time">${time}</span></div>`;
-                }).join('');
-                chatBox.scrollTop = chatBox.scrollHeight;
+            const uD = (await getDoc(doc(db, "users", user.uid))).data();
+            document.getElementById('a-name').innerText = uD.agentName || "Sarah Mitchell";
+            onSnapshot(query(collection(db, "support", user.uid, "messages"), orderBy("createdAt", "asc")), snap => {
+                const box = document.getElementById('c-msgs');
+                box.innerHTML = snap.docs.map(d => `<div class="m ${d.data().isAdmin ? 'm-a' : 'm-u'}">${d.data().text}</div>`).join('');
+                box.scrollTop = box.scrollHeight;
             });
-
-            // 3. Send Logic
-            const sendMsg = async (text) => {
-                if(!text.trim()) return;
-                try {
-                    await addDoc(collection(db, "support", user.uid, "messages"), {
-                        text: text,
-                        isAdmin: false,
-                        senderName: user.displayName,
-                        createdAt: serverTimestamp()
-                    });
-                    // Mark as unread for admin
-                    await setDoc(doc(db, "support", user.uid), {
-                        lastMessage: text,
-                        updatedAt: serverTimestamp(),
-                        userName: user.displayName,
-                        unreadAdmin: true
-                    }, { merge: true });
-                } catch (e) { showToast("Message failed to send.", "error"); }
+            document.getElementById('c-form').onsubmit = async (e) => {
+                e.preventDefault(); const inEl = document.getElementById('c-in'); if(!inEl.value.trim()) return;
+                await addDoc(collection(db, "support", user.uid, "messages"), { text: inEl.value, isAdmin: false, createdAt: serverTimestamp() });
+                inEl.value = "";
             };
-
-            document.getElementById('chat-form-main').onsubmit = (e) => {
-                e.preventDefault();
-                const input = document.getElementById('chat-input-main');
-                sendMsg(input.value);
-                input.value = "";
-            };
-
-            window.sendQuick = (t) => sendMsg(t);
         });
     </script>
 </body>
