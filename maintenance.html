@@ -7,32 +7,21 @@
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        .m-content { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        .m-wrap { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         .m-icon { font-size: 80px; color: var(--gold); margin-bottom: 30px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
     </style>
 </head>
 <body>
-    <div class="m-content reveal">
-        <i class="fa-solid fa-vault m-icon"></i>
-        <h1 style="font-size: 42px;">System Optimization</h1>
-        <p style="max-width: 500px; margin: 20px 0 40px; font-size: 18px; color: var(--muted2);">We are currently performing a scheduled security upgrade to improve the BluePay vault. Your funds are 100% safe.</p>
-        
-        <div class="card" style="border-color: var(--gold); padding: 15px 40px;">
-            <p style="font-weight: 800; color: var(--gold);">ESTIMATED UPTIME: <span id="uptime-text">Soon</span></p>
-        </div>
+    <div class="m-wrap reveal">
+        <i class="fa-solid fa-vault m-icon"></i><h1>Upgrading the Vault</h1>
+        <p style="max-width: 500px; margin: 20px auto 40px;">BluePay is undergoing a security upgrade. We'll be back online shortly.</p>
+        <div class="card" style="border-color: var(--gold); padding: 15px 40px;"><p style="font-weight: 800; color: var(--gold);">ESTIMATED RETURN: <span id="u-text">Soon</span></p></div>
     </div>
-
     <script type="module">
-        import { db } from './firebase-config.js';
-        import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
+        import { db } from './firebase-config.js'; import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         onSnapshot(doc(db, "settings", "global"), snap => {
-            const data = snap.data();
-            if(data) {
-                if(!data.maintenanceMode) window.location.href = 'index.html';
-                document.getElementById('uptime-text').innerText = data.expectedUptime || "Within 2 Hours";
-            }
+            if(snap.exists() && !snap.data().maintenanceMode) window.location.href = 'dashboard.html';
+            document.getElementById('u-text').innerText = snap.data().expectedUptime || "Within 2 Hours";
         });
     </script>
 </body>
