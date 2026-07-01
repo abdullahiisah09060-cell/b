@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Withdraw Profits | BluePay Vault</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -31,18 +31,19 @@
                             <option value="Access Bank">Access Bank</option>
                             <option value="UBA">UBA</option>
                             <option value="Kuda">Kuda Bank</option>
-                            <option value="Opay">Opay / PalmPay</option>
+                            <option value="Opay">Opay</option>
+                            <option value="Palmpay">PalmPay</option>
                             <option value="Moniepoint">Moniepoint</option>
                         </select>
                     </div>
                     <div class="grid-2">
                         <div class="auth-input-group">
                             <label>Account Number</label>
-                            <input type="number" id="w-account" placeholder="0123456789" required minlength="10" maxlength="10">
+                            <input type="number" id="w-account" placeholder="10 Digits" required>
                         </div>
                         <div class="auth-input-group">
                             <label>Account Holder Name</label>
-                            <input type="text" id="w-name" placeholder="Full Bank Name" required>
+                            <input type="text" id="w-name" placeholder="Full Legal Name" required>
                         </div>
                     </div>
                     <div class="grid-2">
@@ -51,37 +52,40 @@
                             <input type="number" id="w-amt" placeholder="Min 1,000" required>
                         </div>
                         <div class="auth-input-group">
-                            <label>Security Code (WDC)</label>
-                            <input type="text" id="w-code" placeholder="WDC-XXXX-XXXX" required>
+                            <label>Validator Code (WDC)</label>
+                            <div class="flex" style="gap: 10px;">
+                                <input type="text" id="w-code" placeholder="WDC-XXXX..." required style="flex:1;">
+                                <button type="button" id="btn-validate" class="btn btn-outline" style="min-height: 52px; padding: 0 15px;"><i class="fa-solid fa-shield-check"></i></button>
+                            </div>
                         </div>
                     </div>
-                    <button type="submit" id="withdraw-btn" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Submit Payout Request</button>
+                    <button type="submit" id="withdraw-btn" class="btn btn-primary" style="width: 100%; margin-top: 20px; padding: 18px;">Submit Payout Request</button>
                 </form>
             </div>
 
             <div class="grid" style="gap: 20px;">
-                <div id="no-code-warn" class="card reveal" style="background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.2);">
-                    <i class="fa-solid fa-triangle-exclamation" style="color: var(--red); font-size: 24px; margin-bottom: 15px;"></i>
+                <div id="wdc-warning" class="card reveal" style="background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.2);">
+                    <i class="fa-solid fa-circle-exclamation" style="color:var(--red); font-size: 24px; margin-bottom: 15px;"></i>
                     <h4>Validator Required</h4>
-                    <p style="font-size: 13px; margin: 10px 0 20px;">You need an active security code to authorize a withdrawal.</p>
-                    <a href="buy-code.html" class="btn btn-gold" style="width: 100%; font-size: 13px; min-height: 40px;">Get Code Now</a>
+                    <p style="font-size: 13px; margin: 10px 0 20px;">You need a fresh Validator Code for every payout request.</p>
+                    <a href="buy-code.html" class="btn btn-gold" style="width: 100%; min-height: 40px; font-size: 13px;">Get Code Now</a>
                 </div>
                 <div class="card reveal">
                     <h4>Payout Policy</h4>
-                    <ul style="font-size: 13px; margin-top: 15px;" class="grid">
+                    <ul style="font-size: 13px; margin-top: 15px; list-style: none;" class="grid">
                         <li class="flex" style="gap:10px;"><i class="fa-solid fa-clock" style="color:var(--blue2)"></i> Processing: 2-24 Hours</li>
-                        <li class="flex" style="gap:10px;"><i class="fa-solid fa-shield-check" style="color:var(--blue2)"></i> Security verification active</li>
-                        <li class="flex" style="gap:10px;"><i class="fa-solid fa-circle-info" style="color:var(--blue2)"></i> Max 1 request per code</li>
+                        <li class="flex" style="gap:10px;"><i class="fa-solid fa-shield" style="color:var(--blue2)"></i> Security code is single-use</li>
+                        <li class="flex" style="gap:10px;"><i class="fa-solid fa-circle-info" style="color:var(--blue2)"></i> Min Withdrawal: ₦1,000</li>
                     </ul>
                 </div>
             </div>
         </div>
 
         <div class="card reveal" style="margin-top: 40px; padding: 0; overflow: hidden;">
-            <div style="padding: 20px 25px; border-bottom: 1px solid var(--border);"><h3>Payout History</h3></div>
-            <div id="withdraw-history" class="table-wrapper">
+            <div style="padding: 20px 25px; border-bottom: 1px solid var(--border);"><h3>Withdrawal History</h3></div>
+            <div class="table-wrapper">
                 <table style="width: 100%;">
-                    <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+                    <thead><tr><th>Date</th><th>Amount</th><th>Details</th><th>Status</th></tr></thead>
                     <tbody id="w-history-body"></tbody>
                 </table>
             </div>
@@ -92,9 +96,9 @@
 
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { auth, db, fmtN, requireAuth, updateWallet, showToast } from './firebase-config.js';
-        import { initAppShell, toggleLoader } from './components.js';
-        import { collection, query, where, getDocs, updateDoc, doc, addDoc, serverTimestamp, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { auth, db, fmtN, requireAuth, updateWallet, logTransaction } from './firebase-config.js';
+        import { initAppShell, showToast, setLoading, showModal } from './components.js';
+        import { collection, query, where, getDocs, updateDoc, doc, addDoc, serverTimestamp, orderBy, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         requireAuth(async user => {
             initAppShell('withdraw');
@@ -105,81 +109,86 @@
                 document.getElementById('withdraw-bal').innerText = fmtN(currentBal);
             });
 
-            // Check for valid codes to hide warning
-            const qCodes = query(collection(db, "codes"), where("uid", "==", user.uid), where("used", "==", false));
-            onSnapshot(qCodes, snap => {
+            // Check for codes to hide/show warning
+            const qCode = query(collection(db, "codes"), where("uid", "==", user.uid), where("used", "==", false));
+            onSnapshot(qCode, snap => {
                 const active = snap.docs.filter(d => d.data().expiresAt.toDate() > new Date());
-                document.getElementById('no-code-warn').style.display = active.length > 0 ? 'none' : 'block';
+                document.getElementById('wdc-warning').style.display = active.length > 0 ? 'none' : 'block';
             });
+
+            document.getElementById('btn-validate').onclick = async () => {
+                const codeVal = document.getElementById('w-code').value.trim();
+                if(!codeVal) return;
+                const q = query(collection(db, "codes"), where("code", "==", codeVal), where("used", "==", false));
+                const snap = await getDocs(q);
+                if(!snap.empty && snap.docs[0].data().expiresAt.toDate() > new Date()) {
+                    showToast("Code Validated ✓", "success");
+                    document.getElementById('btn-validate').innerHTML = `<i class="fa-solid fa-check" style="color:var(--green)"></i>`;
+                } else {
+                    showToast("Invalid or Expired Code", "error");
+                }
+            };
 
             document.getElementById('withdraw-form').onsubmit = async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('withdraw-btn');
                 const amt = parseFloat(document.getElementById('w-amt').value);
                 const codeVal = document.getElementById('w-code').value.trim();
+                const acct = document.getElementById('w-account').value;
 
-                if (amt < 1000) return showToast("Minimum withdrawal is ₦1,000", "warning");
-                if (amt > currentBal) return showToast("Insufficient balance", "error");
+                if (amt < 1000) return showToast("Min ₦1,000", "warning");
+                if (amt > currentBal) return showToast("Insufficient Balance", "error");
+                if (acct.length !== 10) return showToast("Account number must be 10 digits", "warning");
 
-                toggleLoader(btn, true, "Processing Request...");
+                setLoading(btn, true, "Verifying validator...");
 
                 try {
-                    // 1. Validate Code
-                    const codeQuery = query(collection(db, "codes"), where("code", "==", codeVal), where("used", "==", false));
-                    const codeSnap = await getDocs(codeQuery);
+                    const q = query(collection(db, "codes"), where("code", "==", codeVal), where("used", "==", false));
+                    const snap = await getDocs(q);
                     
-                    if (codeSnap.empty) throw new Error("Invalid or used security code.");
-                    const codeDoc = codeSnap.docs[0];
-                    if (codeDoc.data().uid !== user.uid) throw new Error("Code ownership mismatch.");
-                    if (codeDoc.data().expiresAt.toDate() < new Date()) throw new Error("This code has expired.");
+                    if (snap.empty || snap.docs[0].data().expiresAt.toDate() < new Date()) {
+                        throw new Error("Invalid or expired WDC code.");
+                    }
 
-                    // 2. Submit Withdrawal
-                    await addDoc(collection(db, "withdrawals"), {
-                        uid: user.uid,
-                        amount: amt,
-                        bankName: document.getElementById('w-bank').value,
-                        accountNumber: document.getElementById('w-account').value,
-                        accountName: document.getElementById('w-name').value,
-                        status: "pending",
-                        code: codeVal,
-                        createdAt: serverTimestamp()
+                    const codeDoc = snap.docs[0];
+                    const batch = writeBatch(db);
+
+                    // 1. Create Withdrawal Record
+                    const wRef = doc(collection(db, "withdrawals"));
+                    batch.set(wRef, {
+                        uid: user.uid, amount: amt, bank: document.getElementById('w-bank').value,
+                        accountNumber: acct, accountName: document.getElementById('w-name').value,
+                        status: "pending", code: codeVal, createdAt: serverTimestamp()
                     });
 
-                    // 3. Update Code and Balance
-                    await updateDoc(doc(db, "codes", codeDoc.id), { used: true });
+                    // 2. Mark Code Used
+                    batch.update(codeDoc.ref, { used: true });
+
+                    await batch.commit();
+
+                    // 3. Deduct Balance
                     await updateWallet(user.uid, amt, 'debit', {
                         type: 'withdrawal',
                         description: `Payout to ${document.getElementById('w-bank').value}`,
                         status: 'pending'
                     });
 
-                    showToast("Withdrawal request submitted for approval!", "success");
+                    showToast("Withdrawal request submitted!", "success");
                     e.target.reset();
                 } catch (err) {
                     showToast(err.message, "error");
                 } finally {
-                    toggleLoader(btn, false, "Submit Payout Request");
+                    setLoading(btn, false, "Submit Payout Request");
                 }
             };
 
-            // History
-            const qHistory = query(collection(db, "withdrawals"), where("uid", "==", user.uid), orderBy("createdAt", "desc"));
-            onSnapshot(qHistory, snap => {
-                const body = document.getElementById('w-history-body');
-                if (snap.empty) {
-                    body.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color:var(--muted)">No history.</td></tr>`;
-                    return;
-                }
-                body.innerHTML = snap.docs.map(doc => {
+            // History Listener
+            const qH = query(collection(db, "withdrawals"), where("uid", "==", user.uid), orderBy("createdAt", "desc"));
+            onSnapshot(qH, snap => {
+                document.getElementById('w-history-body').innerHTML = snap.empty ? `<tr><td colspan="4" style="text-align:center; padding:40px;">No requests yet.</td></tr>` : 
+                snap.docs.map(doc => {
                     const w = doc.data();
-                    return `
-                        <tr>
-                            <td>${w.createdAt ? w.createdAt.toDate().toLocaleDateString() : '...'}</td>
-                            <td style="font-weight:800;">${fmtN(w.amount)}</td>
-                            <td>${w.bankName}</td>
-                            <td><span class="badge ${w.status === 'pending' ? 'badge-warning' : (w.status === 'completed' ? 'badge-success' : 'badge-danger')}">${w.status}</span></td>
-                        </tr>
-                    `;
+                    return `<tr><td>${w.createdAt ? w.createdAt.toDate().toLocaleDateString() : '...'}</td><td style="font-weight:800">${fmtN(w.amount)}</td><td>${w.bank}<br><small>${w.accountNumber}</small></td><td><span class="badge ${w.status === 'pending' ? 'badge-warning' : (w.status === 'completed' ? 'badge-success' : 'badge-danger')}">${w.status}</span></td></tr>`;
                 }).join('');
             });
         });
