@@ -2,29 +2,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Under Maintenance — BluePay</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        .m-container { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        .m-content { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         .m-icon { font-size: 80px; color: var(--gold); margin-bottom: 30px; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
     </style>
 </head>
 <body>
-    <div class="m-container">
-        <i class="fa-solid fa-screwdriver-wrench m-icon"></i>
-        <h1 style="font-size: 42px;">Upgrading the Vault</h1>
-        <p style="color: var(--muted2); max-width: 500px; margin: 20px 0 40px; font-size: 18px;">We are currently performing a scheduled system upgrade. We'll be back online within 2 hours. Your funds remain 100% secure.</p>
-        <div class="card" style="border-color: var(--border-gold);">
-            <p style="font-weight: 800; color: var(--gold);">ESTIMATED UPTIME: 2:00 PM WAT</p>
+    <div class="m-content reveal">
+        <i class="fa-solid fa-vault m-icon"></i>
+        <h1 style="font-size: 42px;">System Optimization</h1>
+        <p style="max-width: 500px; margin: 20px 0 40px; font-size: 18px; color: var(--muted2);">We are currently performing a scheduled security upgrade to improve the BluePay vault. Your funds are 100% safe.</p>
+        
+        <div class="card" style="border-color: var(--gold); padding: 15px 40px;">
+            <p style="font-weight: 800; color: var(--gold);">ESTIMATED UPTIME: <span id="uptime-text">Soon</span></p>
         </div>
     </div>
+
     <script type="module">
         import { db } from './firebase-config.js';
         import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
         onSnapshot(doc(db, "settings", "global"), snap => {
-            if(snap.exists() && !snap.data().maintenanceMode) window.location.href = 'index.html';
+            const data = snap.data();
+            if(data) {
+                if(!data.maintenanceMode) window.location.href = 'index.html';
+                document.getElementById('uptime-text').innerText = data.expectedUptime || "Within 2 Hours";
+            }
         });
     </script>
 </body>
