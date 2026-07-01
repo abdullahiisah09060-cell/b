@@ -3,9 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Investment Plans — BluePay</title>
+    <title>Invest | BluePay Vault</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .tabs { display: flex; gap: 30px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+        .tab-btn { padding: 15px 5px; font-weight: 700; color: var(--muted2); cursor: pointer; position: relative; }
+        .tab-btn.active { color: var(--blue2); }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--blue2); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
 <body data-page="invest">
     <div id="global-loader"><div class="spinner"></div></div>
@@ -13,19 +22,30 @@
     <header class="mobile-header"></header>
 
     <main class="main-content">
-        <div class="reveal" style="margin-bottom: 40px;">
-            <h1>Grow Your Wealth</h1>
-            <p style="color: var(--muted2);">Select a plan and start earning daily ROI instantly.</p>
+        <div class="flex-between reveal" style="margin-bottom: 40px; flex-wrap: wrap; gap: 20px;">
+            <div>
+                <h1>Investment Hub</h1>
+                <p>Available for Investment: <b id="user-bal-top" class="gold-text">₦0.00</b></p>
+            </div>
+            <a href="deposit.html" class="btn btn-outline" style="min-height: 40px; padding: 0 20px;">+ Fund Wallet</a>
         </div>
 
-        <div class="grid" id="plans-container" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 25px;">
-            <!-- Plans injected here -->
+        <div class="tabs reveal">
+            <div class="tab-btn active" onclick="switchTab('new')">Subscribe New</div>
+            <div class="tab-btn" onclick="switchTab('active')">My Portfolios</div>
         </div>
 
-        <div class="reveal" style="margin-top: 60px;">
-            <h3 style="margin-bottom: 25px;">My Portfolios</h3>
-            <div id="active-investments" class="grid-2">
-                <p style="color: var(--muted2);">No active investments.</p>
+        <!-- TAB: Subscribe New -->
+        <div id="tab-new" class="tab-content active">
+            <div id="plans-grid" class="grid-2 reveal">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- TAB: My Portfolios -->
+        <div id="tab-active" class="tab-content">
+            <div id="active-invest-list" class="grid reveal">
+                <!-- Injected via JS -->
             </div>
         </div>
     </main>
@@ -34,128 +54,161 @@
 
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { auth, db, INVESTMENT_PLANS, fmtN, toast } from './firebase-config.js';
-        import { collection, addDoc, getDoc, getDocs, updateDoc, doc, query, where, serverTimestamp, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { showConfirm, toggleLoader } from './components.js';
+        import { auth, db, INVESTMENT_PLANS, fmtN, calculateROI, requireAuth, updateWallet } from './firebase-config.js';
+        import { initAppShell, showConfirm, showToast, toggleLoader } from './components.js';
+        import { collection, query, where, onSnapshot, serverTimestamp, addDoc, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const cont = document.getElementById('plans-container');
-        cont.innerHTML = INVESTMENT_PLANS.map(p => `
-            <div class="card reveal" style="display:flex; flex-direction:column; border-color: ${p.roiPercent > 40 ? 'var(--border-gold)' : 'var(--border)'}">
-                <div class="flex-between">
-                    <span class="badge ${p.roiPercent > 40 ? 'badge-warning' : 'badge-pending'}">${p.name.toUpperCase()}</span>
-                    <h3 class="gold-text">${p.roiPercent}% ROI</h3>
-                </div>
-                <div style="margin: 25px 0;">
-                    <p style="font-size: 13px; color: var(--muted2);">Duration: <b>${p.durationDays} Days</b></p>
-                    <p style="font-size: 13px; color: var(--muted2);">Daily Returns: <b>${(p.roiPercent/p.durationDays).toFixed(2)}%</b></p>
-                </div>
-                <div class="auth-input-group">
-                    <label>Investment Amount</label>
-                    <input type="number" id="amt-${p.id}" value="${p.min}" min="${p.min}" max="${p.max === Infinity ? '' : p.max}">
-                </div>
-                <button class="btn btn-primary" onclick="processInvest('${p.id}')" style="width:100%; margin-top:auto;">Start Plan</button>
-            </div>
-        `).join('');
+        requireAuth(user => {
+            initAppShell('invest');
+            let currentBal = 0;
 
-        window.processInvest = async (planId) => {
-            const plan = INVESTMENT_PLANS.find(x => x.id === planId);
-            const amt = parseFloat(document.getElementById(`amt-${planId}`).value);
-
-            showConfirm({
-                title: `Invest in ${plan.name}`,
-                message: `You are about to invest ${fmtN(amt)}. Your balance will be debited and you will start earning ROI every 24 hours.`,
-                onConfirm: async () => {
-                    toggleLoader(true);
-                    try {
-                        const userSnap = await getDocs(query(collection(db, "users"), where("uid", "==", auth.currentUser.uid)));
-                        const userData = userSnap.docs[0].data();
-                        
-                        if (userData.balance < amt) throw new Error("Insufficient balance.");
-
-                        await addDoc(collection(db, "investments"), {
-                            uid: auth.currentUser.uid,
-                            planId: planId,
-                            planName: plan.name,
-                            amount: amt,
-                            dailyROI: (amt * (plan.roiPercent/100)) / plan.durationDays,
-                            status: "active",
-                            totalEarned: 0,
-                            lastClaimed: serverTimestamp(),
-                            createdAt: serverTimestamp(),
-                            maturesAt: new Date(Date.now() + plan.durationDays * 24 * 60 * 60 * 1000)
-                        });
-
-                        await updateDoc(doc(db, "users", userSnap.docs[0].id), {
-                            balance: userData.balance - amt,
-                            totalInvested: userData.totalInvested + amt
-                        });
-
-                        toast("Investment successful!", "success");
-                    } catch (err) {
-                        toast(err.message, "error");
-                    } finally {
-                        toggleLoader(false);
-                    }
-                }
+            // Balance Sync
+            onSnapshot(doc(db, "users", user.uid), snap => {
+                currentBal = snap.data().balance;
+                document.getElementById('user-bal-top').innerText = fmtN(currentBal);
             });
-        };
 
-        // Real-time Active Investments with Claim Logic
-        const q = query(collection(db, "investments"), where("uid", "==", auth.currentUser?.uid || ""), where("status", "==", "active"));
-        onSnapshot(q, (snap) => {
-            const cont = document.getElementById('active-investments');
-            if (snap.empty) return;
-            cont.innerHTML = snap.docs.map(docSnap => {
-                const inv = docSnap.data();
-                const last = inv.lastClaimed ? inv.lastClaimed.toDate() : new Date();
-                const canClaim = (new Date() - last) > (24 * 60 * 60 * 1000);
-
-                return `
-                    <div class="card">
-                        <div class="flex-between">
-                            <h4>${inv.planName}</h4>
-                            <span class="badge badge-success">ACTIVE</span>
-                        </div>
-                        <h2 style="margin: 15px 0;">${fmtN(inv.amount)}</h2>
-                        <div class="flex-between">
-                            <p style="font-size: 11px; color: var(--muted2);">EARNED: ${fmtN(inv.totalEarned)}</p>
-                            ${canClaim ? 
-                                `<button onclick="claimROI('${docSnap.id}')" class="btn btn-primary" style="padding: 8px 15px; font-size: 12px;">Claim ROI</button>` :
-                                `<p style="font-size: 11px; color: var(--orange);">Next claim: 24h cycle</p>`
-                            }
-                        </div>
+            // Render Plans
+            const grid = document.getElementById('plans-grid');
+            grid.innerHTML = INVESTMENT_PLANS.map(p => `
+                <div class="card" style="display:flex; flex-direction:column; border-color: ${p.roiPercent > 40 ? 'var(--gold)' : 'var(--border)'}">
+                    <div class="flex-between">
+                        <span class="badge ${p.roiPercent > 40 ? 'badge-warning' : 'badge-pending'}">${p.name}</span>
+                        <h2 class="grad-text">${p.roiPercent}% ROI</h2>
                     </div>
-                `;
-            }).join('');
-        });
+                    <div style="margin: 25px 0;">
+                        <div class="flex-between" style="font-size: 13px; margin-bottom: 10px;"><span>Duration</span><b>${p.durationDays} Days</b></div>
+                        <div class="flex-between" style="font-size: 13px; margin-bottom: 10px;"><span>Min Entry</span><b>${fmtN(p.min)}</b></div>
+                    </div>
+                    <div class="auth-input-group">
+                        <label>Investment Amount (₦)</label>
+                        <input type="number" id="amt-${p.id}" value="${p.min}" min="${p.min}" max="${p.max}">
+                    </div>
+                    <button class="btn btn-primary" onclick="confirmInvestment('${p.id}')" style="width: 100%; margin-top: auto;">Subscribe Plan</button>
+                </div>
+            `).join('');
 
-        window.claimROI = async (id) => {
-            toggleLoader(true);
-            try {
-                const invRef = doc(db, "investments", id);
+            window.confirmInvestment = async (id) => {
+                const plan = INVESTMENT_PLANS.find(x => x.id === id);
+                const amt = parseFloat(document.getElementById(`amt-${id}`).value);
+
+                if (amt < plan.min || amt > plan.max) return showToast(`Invalid amount for ${plan.name} plan`, "error");
+                if (amt > currentBal) return showToast("Insufficient wallet balance", "error");
+
+                const roi = calculateROI(amt, id);
+
+                showConfirm({
+                    title: `Subscribe ${plan.name}?`,
+                    message: `Invest ${fmtN(amt)} for ${plan.durationDays} days. Expected total payout: ${fmtN(roi.total)}.`,
+                    confirmText: "Invest Now",
+                    onConfirm: async () => {
+                        try {
+                            // 1. Debit & Log
+                            await updateWallet(user.uid, amt, 'debit', {
+                                type: 'investment',
+                                description: `Subscription: ${plan.name} Plan`,
+                                status: 'completed'
+                            });
+
+                            // 2. Create Portfolio Record
+                            await addDoc(collection(db, "investments"), {
+                                uid: user.uid,
+                                planId: id,
+                                planName: plan.name,
+                                principal: amt,
+                                dailyYield: roi.daily,
+                                totalYield: roi.profit,
+                                duration: plan.durationDays,
+                                status: "active",
+                                claimCount: 0,
+                                lastClaimed: null,
+                                createdAt: serverTimestamp(),
+                                maturesAt: new Date(Date.now() + plan.durationDays * 24 * 60 * 60 * 1000)
+                            });
+
+                            showToast(`${plan.name} Investment Activated!`, "success");
+                            window.switchTab('active');
+                        } catch (e) { showToast(e, "error"); }
+                    }
+                });
+            };
+
+            // Active Portfolios Listener
+            const qAct = query(collection(db, "investments"), where("uid", "==", user.uid), where("status", "==", "active"));
+            onSnapshot(qAct, snap => {
+                const list = document.getElementById('active-invest-list');
+                if (snap.empty) {
+                    list.innerHTML = `<div class="card" style="text-align: center; padding: 60px 0;"><p>You have no active investments.</p></div>`;
+                    return;
+                }
+                list.innerHTML = snap.docs.map(docSnap => {
+                    const inv = docSnap.data();
+                    const last = inv.lastClaimed ? inv.lastClaimed.toDate() : 0;
+                    const hoursPassed = (Date.now() - last) / (1000 * 60 * 60);
+                    const canClaim = hoursPassed >= 24;
+                    const countdown = canClaim ? "" : `Next in ${Math.ceil(24 - hoursPassed)}h`;
+
+                    return `
+                        <div class="card">
+                            <div class="flex-between" style="margin-bottom: 20px;">
+                                <div><h4 style="font-size: 18px;">${inv.planName} Plan</h4><p class="text-micro">${fmtN(inv.principal)} Principal</p></div>
+                                <span class="badge badge-success">RUNNING</span>
+                            </div>
+                            <div class="flex-between">
+                                <div><p class="text-micro">DAILY RETURNS</p><h3 style="color: var(--green);">${fmtN(inv.dailyYield)}</h3></div>
+                                ${canClaim ? 
+                                    `<button class="btn btn-gold" style="min-height: 40px; padding: 0 20px; font-size: 12px;" onclick="processClaim('${docSnap.id}')">Claim ROI</button>` :
+                                    `<div style="text-align:right;"><span class="badge badge-muted">${countdown}</span></div>`
+                                }
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            });
+
+            window.processClaim = async (invId) => {
+                const invRef = doc(db, "investments", invId);
                 const invSnap = await getDoc(invRef);
                 const invData = invSnap.data();
 
-                const userSnap = await getDocs(query(collection(db, "users"), where("uid", "==", auth.currentUser.uid)));
-                const userData = userSnap.docs[0].data();
+                try {
+                    // Atomic credit
+                    await updateWallet(user.uid, invData.dailyYield, 'credit', {
+                        type: 'daily_claim',
+                        description: `ROI Claim: ${invData.planName}`,
+                        status: 'completed'
+                    });
 
-                await updateDoc(invRef, {
-                    totalEarned: invData.totalEarned + invData.dailyROI,
-                    lastClaimed: serverTimestamp()
-                });
+                    const isLastClaim = (invData.claimCount + 1) >= invData.duration;
+                    
+                    // Update Portfolio
+                    await updateDoc(invRef, {
+                        lastClaimed: serverTimestamp(),
+                        claimCount: invData.claimCount + 1,
+                        status: isLastClaim ? "matured" : "active"
+                    });
 
-                await updateDoc(doc(db, "users", userSnap.docs[0].id), {
-                    balance: userData.balance + invData.dailyROI,
-                    totalEarned: userData.totalEarned + invData.dailyROI
-                });
+                    // If matured, return principal
+                    if (isLastClaim) {
+                        await updateWallet(user.uid, invData.principal, 'credit', {
+                            type: 'return',
+                            description: `Matured Capital: ${invData.planName}`,
+                            status: 'completed'
+                        });
+                        showToast("Plan Matured! Principal returned to wallet.", "success");
+                    } else {
+                        showToast(`Daily ROI of ${fmtN(invData.dailyYield)} claimed!`, "success");
+                    }
+                } catch (e) { showToast("Claim failed. Try later.", "error"); }
+            };
 
-                toast(`Claimed ${fmtN(invData.dailyROI)} ROI!`, "success");
-            } catch (err) {
-                toast(err.message, "error");
-            } finally {
-                toggleLoader(false);
-            }
-        };
+            window.switchTab = (id) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                event.target.classList.add('active');
+                document.getElementById(`tab-${id}`).classList.add('active');
+            };
+        });
     </script>
 </body>
 </html>
