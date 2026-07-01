@@ -3,58 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leaderboard — BluePay</title>
+    <title>Top Investors | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .rank-card { display: flex; align-items: center; gap: 20px; padding: 20px 25px; border-radius: 16px; background: var(--bg2); border: 1px solid var(--border); transition: 0.3s; margin-bottom: 12px; }
+        .rank-card:hover { border-color: var(--blue2); transform: translateX(10px); }
+        .rank-num { font-size: 24px; font-weight: 900; width: 40px; color: var(--muted); }
+        .rank-1 { border-color: var(--gold); }
+        .rank-1 .rank-num { color: var(--gold); font-size: 32px; }
+        .user-ava { width: 50px; height: 50px; border-radius: 50%; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid var(--border); }
+    </style>
 </head>
-<body data-page="dashboard">
+<body data-page="public">
     <div id="global-loader"><div class="spinner"></div></div>
-    <aside class="sidebar"></aside>
-    <header class="mobile-header"></header>
+    <header class="mobile-header" style="display: flex;"></header>
 
-    <main class="main-content">
-        <div class="reveal" style="margin-bottom: 40px;">
-            <h1>Top Investors</h1>
-            <p style="color: var(--muted2);">Recognizing the highest earners in the BluePay community.</p>
+    <main class="container" style="padding: 120px 20px 100px;">
+        <div class="reveal" style="text-align: center; margin-bottom: 60px;">
+            <h1 style="font-size: 48px;">Community <span class="gold-text">Elite.</span></h1>
+            <p>Recognizing our most committed wealth builders.</p>
         </div>
 
-        <div class="card reveal" style="padding: 0; overflow: hidden;">
-            <div class="table-container">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background: var(--bg3); text-align: left;">
-                            <th style="padding: 20px;">RANK</th>
-                            <th style="padding: 20px;">INVESTOR</th>
-                            <th style="padding: 20px;">TOTAL EARNED</th>
-                            <th style="padding: 20px;">STATUS</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboard-body">
-                        <!-- Data injected -->
-                    </tbody>
-                </table>
-            </div>
+        <div id="leaderboard-list" style="max-width: 700px; margin: 0 auto;">
+            <!-- Ranks Injected -->
+            <div style="padding: 40px; text-align: center;"><div class="spinner" style="margin: 0 auto;"></div></div>
         </div>
     </main>
 
-    <nav class="bottom-nav"></nav>
     <script src="app.js" type="module"></script>
     <script type="module">
         import { db, fmtN } from './firebase-config.js';
-        import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { initAppShell } from './components.js';
+        import { collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const snap = await getDocs(query(collection(db, "users"), orderBy("totalEarned", "desc"), limit(10)));
-        document.getElementById('leaderboard-body').innerHTML = snap.docs.map((doc, i) => {
-            const u = doc.data();
-            return `
-                <tr style="border-bottom: 1px solid var(--border);">
-                    <td style="padding: 20px; font-weight: 900; font-size: 20px; color: ${i < 3 ? 'var(--gold)' : 'var(--muted)'}">#${i+1}</td>
-                    <td style="padding: 20px;"><b>${u.displayName.split(' ')[0]} ${u.displayName.split(' ')[1]?.[0] || ''}.</b></td>
-                    <td style="padding: 20px; font-weight: 800; color: var(--green);">${fmtN(u.totalEarned)}</td>
-                    <td style="padding: 20px;"><span class="badge badge-success">Active</span></td>
-                </tr>
-            `;
-        }).join('');
+        // Simple Mobile Nav injection for public page
+        const header = document.querySelector('.mobile-header');
+        header.innerHTML = `<div class="flex" style="gap:10px;"><div style="width:32px; height:32px; background:var(--blue); border-radius:8px; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-b" style="color:white; font-size:14px;"></i></div><span style="font-size:18px; font-weight:900;">BluePay</span></div><a href="login.html" class="btn btn-primary" style="padding:8px 16px; min-height:36px; font-size:12px;">Join Them</a>`;
+
+        const q = query(collection(db, "users"), orderBy("totalInvested", "desc"), limit(20));
+        onSnapshot(q, snap => {
+            const list = document.getElementById('leaderboard-list');
+            list.innerHTML = snap.docs.map((doc, i) => {
+                const u = doc.data();
+                const isVerified = u.kycStatus === 'verified';
+                const initial = u.displayName.split(' ').map(n => n[0]).join('');
+                
+                return `
+                    <div class="rank-card rank-${i+1} reveal">
+                        <div class="rank-num">#${i+1}</div>
+                        <div class="user-ava">${initial}</div>
+                        <div style="flex:1;">
+                            <h4 style="font-size: 16px;">${u.displayName.split(' ')[0]} ${u.displayName.split(' ')[1]?.[0] || ''}.</h4>
+                            <p style="font-size: 11px;">${isVerified ? '<i class="fa-solid fa-circle-check" style="color:var(--blue2)"></i> Verified Member' : 'Active Member'}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p class="text-micro" style="font-size: 9px;">INVESTED</p>
+                            <p style="font-weight: 800; color: var(--gold);">${fmtN(u.totalInvested)}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        });
     </script>
 </body>
 </html>
