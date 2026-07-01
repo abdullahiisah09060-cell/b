@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Withdrawal Validator | BluePay</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Validator Code | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://js.paystack.co/v1/inline.js"></script>
@@ -14,42 +14,30 @@
     <header class="mobile-header"></header>
 
     <main class="main-content">
-        <div class="reveal" style="margin-bottom: 40px;">
-            <h1>Security Validator</h1>
-            <p>Generate a secure code to authorize your next withdrawal.</p>
-        </div>
+        <div class="reveal" style="margin-bottom: 40px;"><h1>Withdrawal Validator</h1><p>Mandatory security code required for manual payout authorization.</p></div>
 
         <div class="card reveal" style="max-width: 500px; margin: 0 auto; text-align: center; border-color: var(--border-blue);">
-            <div style="width: 80px; height: 80px; background: rgba(168,85,247,0.1); color: var(--purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px;">
-                <i class="fa-solid fa-key" style="font-size: 32px;"></i>
-            </div>
-            <h3>Validator Code</h3>
+            <div style="width: 80px; height: 80px; background: rgba(168,85,247,0.1); color: var(--purple); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px; font-size: 32px;"><i class="fa-solid fa-key"></i></div>
+            <h3>Validator Code (WDC)</h3>
             <h1 style="font-size: 56px; margin: 15px 0;">₦10,000</h1>
-            <p style="font-size: 14px; color: var(--muted2); margin-bottom: 35px;">Required for manual withdrawal authorization. Valid for 24 hours.</p>
-            
-            <button id="buy-code-btn" class="btn btn-primary" style="width: 100%; padding: 20px; font-size: 18px;">
-                <i class="fa-solid fa-cart-shopping"></i> Purchase via Paystack
-            </button>
+            <p style="font-size: 14px; margin-bottom: 35px;">This single-use code authorizes one withdrawal request and expires in 24 hours.</p>
+            <button id="buy-btn" class="btn btn-primary" style="width: 100%; padding: 20px; font-size: 18px;">Purchase via Paystack</button>
         </div>
 
         <div class="reveal" style="margin-top: 60px;">
-            <h3 style="margin-bottom: 25px;">Validator History</h3>
-            <div id="code-history" class="grid-2">
-                <p style="color: var(--muted2);">No codes purchased yet.</p>
+            <h3 style="margin-bottom: 25px;">My Validator Codes</h3>
+            <div id="code-list" class="grid-2">
+                <div style="padding: 40px; text-align: center; grid-column: 1/-1;"><div class="spinner" style="margin: 0 auto;"></div></div>
             </div>
         </div>
     </main>
 
-    <!-- Code Reveal Modal -->
-    <div id="code-reveal-modal" class="modal-overlay">
+    <div id="wdc-modal" class="modal-overlay">
         <div class="modal-card" style="text-align: center;">
-            <h3 style="color: var(--green);">Code Generated!</h3>
-            <p style="margin: 15px 0 30px;">Please copy and save this code securely. It expires in 24 hours.</p>
-            <div id="display-code" style="background: var(--bg3); padding: 25px; border: 2px dashed var(--blue2); font-family: monospace; font-size: 24px; font-weight: 900; letter-spacing: 2px; color: var(--blue2); margin-bottom: 30px;">WDC-XXXX-XXXX</div>
-            <div class="grid-2">
-                <button id="copy-btn" class="btn btn-outline">Copy Code</button>
-                <a href="withdraw.html" class="btn btn-primary">Withdraw Now</a>
-            </div>
+            <h3 style="color: var(--green);">Code Issued!</h3>
+            <p style="margin: 15px 0 30px;">Copy this code to the withdrawal form. It expires in 24 hours.</p>
+            <div id="revealed-code" style="background: var(--bg3); padding: 20px; border: 2px dashed var(--blue2); font-family: monospace; font-size: 24px; font-weight: 900; letter-spacing: 2px; color: var(--blue2); margin-bottom: 30px;">WDC-XXXX-XXXX</div>
+            <div class="grid-2"><button id="copy-wdc" class="btn btn-outline">Copy Code</button><a href="withdraw.html" class="btn btn-primary">Withdraw Now</a></div>
         </div>
     </div>
 
@@ -57,81 +45,38 @@
 
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { auth, db, WITHDRAWAL_CODE_PRICE, requireAuth, logTransaction } from './firebase-config.js';
-        import { initAppShell, showToast, toggleLoader } from './components.js';
+        import { auth, db, PAYSTACK_PUBLIC_KEY, CODE_PRICE, requireAuth } from './firebase-config.js';
+        import { initAppShell, setLoading, showToast } from './components.js';
         import { collection, query, where, orderBy, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         requireAuth(user => {
             initAppShell('buy-code');
-            const btn = document.getElementById('buy-code-btn');
+            const btn = document.getElementById('buy-btn');
 
             btn.onclick = () => {
-                toggleLoader(btn, true, "Opening Secure Gateway...");
+                setLoading(btn, true, "Opening Paystack...");
                 const handler = PaystackPop.setup({
-                    key: 'pk_test_914662bcd8cdc4c28bfbdeb8f48653dbf00c595a',
-                    email: user.email,
-                    amount: WITHDRAWAL_CODE_PRICE * 100,
-                    currency: 'NGN',
-                    callback: async (response) => {
-                        const codeStr = 'WDC-' + Math.random().toString(36).substring(2, 6).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
-                        const expiresAt = new Date();
-                        expiresAt.setHours(expiresAt.getHours() + 24);
-
-                        try {
-                            await addDoc(collection(db, "codes"), {
-                                uid: user.uid,
-                                code: codeStr,
-                                used: false,
-                                price: WITHDRAWAL_CODE_PRICE,
-                                expiresAt: expiresAt,
-                                createdAt: serverTimestamp(),
-                                paystackRef: response.reference
-                            });
-
-                            await logTransaction(user.uid, {
-                                type: 'buy_code',
-                                amount: WITHDRAWAL_CODE_PRICE,
-                                description: "Withdrawal Validator Code Purchase",
-                                status: "completed"
-                            });
-
-                            document.getElementById('display-code').innerText = codeStr;
-                            document.getElementById('code-reveal-modal').style.display = 'flex';
-                        } catch (e) { showToast("Error saving code.", "error"); }
+                    key: PAYSTACK_PUBLIC_KEY, email: user.email, amount: CODE_PRICE * 100, currency: 'NGN',
+                    callback: async (res) => {
+                        const array = new Uint8Array(8); crypto.getRandomValues(array);
+                        const code = 'WDC-' + Array.from(array, b => b.toString(16).padStart(2,'0')).join('').toUpperCase().substring(0,10);
+                        await addDoc(collection(db, "codes"), { uid: user.uid, code, used: false, expiresAt: new Date(Date.now() + 86400000), createdAt: serverTimestamp(), ref: res.reference });
+                        document.getElementById('revealed-code').innerText = code;
+                        document.getElementById('wdc-modal').style.display = 'flex';
                     },
-                    onClose: () => { toggleLoader(btn, false, "Purchase via Paystack"); }
+                    onClose: () => setLoading(btn, false, "Purchase via Paystack")
                 });
                 handler.openIframe();
             };
 
-            // History Listener
-            const q = query(collection(db, "codes"), where("uid", "==", user.uid), orderBy("createdAt", "desc"));
-            onSnapshot(q, snap => {
-                const cont = document.getElementById('code-history');
-                if (snap.empty) return;
-                cont.innerHTML = snap.docs.map(doc => {
-                    const c = doc.data();
-                    const isExpired = c.expiresAt.toDate() < new Date();
-                    const status = c.used ? 'USED' : (isExpired ? 'EXPIRED' : 'ACTIVE');
-                    const badgeClass = c.used ? 'badge-muted' : (isExpired ? 'badge-danger' : 'badge-success');
-                    
-                    return `
-                        <div class="card flex-between" style="padding: 15px 20px; opacity: ${c.used || isExpired ? '0.6' : '1'}">
-                            <div>
-                                <p class="text-micro">CODE: ${c.code.substring(0,8)}***</p>
-                                <p style="font-size: 11px;">Expires: ${c.expiresAt.toDate().toLocaleDateString()}</p>
-                            </div>
-                            <span class="badge ${badgeClass}">${status}</span>
-                        </div>
-                    `;
+            onSnapshot(query(collection(db, "codes"), where("uid", "==", user.uid), orderBy("createdAt", "desc")), snap => {
+                document.getElementById('code-list').innerHTML = snap.empty ? `<p style="grid-column:1/-1; text-align:center;">No history.</p>` : snap.docs.map(d => {
+                    const c = d.data(); const active = !c.used && c.expiresAt.toDate() > new Date();
+                    return `<div class="card flex-between" style="padding:15px 20px; opacity:${active ? 1 : 0.6}"><div><p class="text-micro">WDC: ${c.code.substring(0,8)}***</p><p style="font-size:11px;">Expires: ${c.expiresAt.toDate().toLocaleDateString()}</p></div><span class="badge ${active ? 'badge-success' : 'badge-muted'}">${c.used ? 'USED' : (active ? 'ACTIVE' : 'EXPIRED')}</span></div>`;
                 }).join('');
             });
 
-            document.getElementById('copy-btn').onclick = () => {
-                const code = document.getElementById('display-code').innerText;
-                navigator.clipboard.writeText(code);
-                showToast("Code copied to clipboard!", "success");
-            };
+            document.getElementById('copy-wdc').onclick = () => { navigator.clipboard.writeText(document.getElementById('revealed-code').innerText); showToast("Copied!", "success"); };
         });
     </script>
 </body>
