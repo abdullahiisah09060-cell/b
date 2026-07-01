@@ -3,9 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KYC Verification — BluePay</title>
+    <title>Identity Verification | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .upload-card { border: 2px dashed var(--border); padding: 40px; text-align: center; border-radius: 16px; cursor: pointer; transition: 0.3s; position: relative; overflow: hidden; }
+        .upload-card:hover { border-color: var(--blue2); background: var(--bg3); }
+        .upload-card i { font-size: 32px; color: var(--muted); margin-bottom: 15px; }
+        .preview-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+        .status-banner { padding: 20px; border-radius: 12px; margin-bottom: 30px; display: none; }
+    </style>
 </head>
 <body data-page="profile">
     <div id="global-loader"><div class="spinner"></div></div>
@@ -13,32 +20,68 @@
     <header class="mobile-header"></header>
 
     <main class="main-content">
-        <div class="reveal" style="max-width: 600px; margin: 0 auto;">
-            <h1>Identity Verification</h1>
-            <p style="color: var(--muted2); margin-bottom: 30px;">Upload your government ID to unlock full account limits.</p>
+        <div class="reveal" style="max-width: 800px; margin: 0 auto;">
+            <h1>KYC Verification</h1>
+            <p style="margin-bottom: 30px;">Verify your identity to increase limits and secure your capital.</p>
 
-            <div id="kyc-status-msg"></div>
+            <!-- Dynamic Status Banner -->
+            <div id="kyc-banner" class="status-banner"></div>
 
-            <div class="card reveal" id="kyc-form-card">
+            <div id="kyc-form-view" class="card reveal">
                 <form id="kyc-form">
-                    <div class="auth-input-group">
-                        <label>ID Type</label>
-                        <select id="id-type" required>
-                            <option value="nin">National ID (NIN)</option>
-                            <option value="voters">Voters Card</option>
-                            <option value="passport">International Passport</option>
-                        </select>
+                    <div class="grid-2">
+                        <div class="auth-input-group">
+                            <label>Full Legal Name</label>
+                            <input type="text" id="k-name" required placeholder="As shown on ID">
+                        </div>
+                        <div class="auth-input-group">
+                            <label>Identification Type</label>
+                            <select id="k-type" required>
+                                <option value="nin">National ID (NIN Slip)</option>
+                                <option value="voters">Voters Card (PVC)</option>
+                                <option value="passport">International Passport</option>
+                                <option value="license">Driver's License</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="auth-input-group">
-                        <label>ID Number</label>
-                        <input type="text" id="id-number" placeholder="Enter ID Number" required>
+                        <label>ID Card Number</label>
+                        <input type="text" id="k-number" required placeholder="Enter ID serial number">
                     </div>
-                    <div class="auth-input-group">
-                        <label>Upload Front View (Image)</label>
-                        <input type="file" id="id-file" accept="image/*" required>
+
+                    <div class="grid-2" style="margin-top: 20px;">
+                        <div>
+                            <label class="text-micro" style="margin-bottom: 10px; display: block;">Front of ID Card</label>
+                            <div class="upload-card" onclick="document.getElementById('file-front').click()">
+                                <i class="fa-solid fa-address-card"></i>
+                                <p style="font-size: 12px;">Click to upload ID Front</p>
+                                <img id="p-front" class="preview-img">
+                                <input type="file" id="file-front" hidden accept="image/*">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-micro" style="margin-bottom: 10px; display: block;">Clear Selfie with ID</label>
+                            <div class="upload-card" onclick="document.getElementById('file-selfie').click()">
+                                <i class="fa-solid fa-camera-retro"></i>
+                                <p style="font-size: 12px;">Click to upload Selfie</p>
+                                <img id="p-selfie" class="preview-img">
+                                <input type="file" id="file-selfie" hidden accept="image/*">
+                            </div>
+                        </div>
                     </div>
-                    <button type="submit" id="kyc-submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Submit for Review</button>
+
+                    <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 40px; padding: 20px;">
+                        Submit Documents for Review
+                    </button>
                 </form>
+            </div>
+
+            <!-- Pending/Success View -->
+            <div id="kyc-wait-view" style="display: none; text-align: center; padding: 60px 0;">
+                <div style="font-size: 80px; color: var(--gold); margin-bottom: 30px;"><i class="fa-solid fa-hourglass-half fa-spin"></i></div>
+                <h2>Verification in Progress</h2>
+                <p style="max-width: 450px; margin: 20px auto;">Our compliance team is currently reviewing your documents. This process usually takes 2-6 business hours.</p>
+                <a href="dashboard.html" class="btn btn-outline" style="margin-top: 30px;">Return to Dashboard</a>
             </div>
         </div>
     </main>
@@ -47,46 +90,84 @@
 
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { auth, db, toast, listenUser } from './firebase-config.js';
-        import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { toggleLoader } from './components.js';
+        import { auth, db, requireAuth } from './firebase-config.js';
+        import { initAppShell, showToast, toggleLoader } from './components.js';
+        import { doc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        listenUser(auth.currentUser?.uid || "", (user) => {
-            const msg = document.getElementById('kyc-status-msg');
-            const card = document.getElementById('kyc-form-card');
-            
-            if (user.kycStatus === 'pending') {
-                msg.innerHTML = `<div class="card" style="border-color: var(--orange); text-align:center;"><h3 style="color:var(--orange)">Verification Pending</h3><p>Our team is reviewing your documents.</p></div>`;
-                card.style.display = 'none';
-            } else if (user.kycStatus === 'verified') {
-                msg.innerHTML = `<div class="card" style="border-color: var(--green); text-align:center;"><h3 style="color:var(--green)">Account Verified</h3><p>Full features unlocked.</p></div>`;
-                card.style.display = 'none';
-            }
+        requireAuth(user => {
+            initAppShell('profile');
+            let base64Front = "", base64Selfie = "";
+
+            // Listen for Status
+            onSnapshot(doc(db, "users", user.uid), snap => {
+                const u = snap.data();
+                const banner = document.getElementById('kyc-banner');
+                const formView = document.getElementById('kyc-form-view');
+                const waitView = document.getElementById('kyc-wait-view');
+
+                if (u.kycStatus === 'pending') {
+                    formView.style.display = 'none';
+                    waitView.style.display = 'block';
+                } else if (u.kycStatus === 'verified') {
+                    formView.style.display = 'none';
+                    waitView.style.display = 'none';
+                    banner.style.display = 'block';
+                    banner.style.background = 'rgba(34,197,94,0.1)';
+                    banner.innerHTML = `<h3 style="color:var(--green)">✓ Account Verified</h3><p style="font-size:14px;">Your identity is confirmed. Full withdrawal limits are active.</p>`;
+                } else if (u.kycStatus === 'rejected') {
+                    banner.style.display = 'block';
+                    banner.style.background = 'rgba(239,68,68,0.1)';
+                    banner.innerHTML = `<h3 style="color:var(--red)">⚠ Verification Rejected</h3><p style="font-size:14px;">Please resubmit clear documents for review.</p>`;
+                }
+            });
+
+            // Image Handlers
+            const handleFile = (inputId, previewId, callback) => {
+                document.getElementById(inputId).onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file.size > 2 * 1024 * 1024) return showToast("Image too large (Max 2MB)", "error");
+                    
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const preview = document.getElementById(previewId);
+                        preview.src = reader.result;
+                        preview.style.display = 'block';
+                        callback(reader.result);
+                    };
+                    reader.readAsDataURL(file);
+                };
+            };
+
+            handleFile('file-front', 'p-front', (b64) => base64Front = b64);
+            handleFile('file-selfie', 'p-selfie', (b64) => base64Selfie = b64);
+
+            document.getElementById('kyc-form').onsubmit = async (e) => {
+                e.preventDefault();
+                if (!base64Front || !base64Selfie) return showToast("Please upload both required images", "warning");
+
+                const btn = document.getElementById('submit-btn');
+                toggleLoader(btn, true, "Uploading Secured Documents...");
+
+                try {
+                    await setDoc(doc(db, "kyc", user.uid), {
+                        uid: user.uid,
+                        fullName: document.getElementById('k-name').value,
+                        idType: document.getElementById('k-type').value,
+                        idNumber: document.getElementById('k-number').value,
+                        imgFront: base64Front,
+                        imgSelfie: base64Selfie,
+                        status: "pending",
+                        submittedAt: serverTimestamp()
+                    });
+
+                    await setDoc(doc(db, "users", user.uid), { kycStatus: "pending" }, { merge: true });
+                    showToast("Verification submitted successfully!", "success");
+                } catch (err) {
+                    showToast(err.message, "error");
+                    toggleLoader(btn, false, "Submit Documents for Review");
+                }
+            };
         });
-
-        document.getElementById('kyc-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('kyc-submit');
-            toggleLoader(true, btn);
-
-            try {
-                // In a real app, upload to Storage. Here we simulate submission.
-                await setDoc(doc(db, "kyc", auth.currentUser.uid), {
-                    uid: auth.currentUser.uid,
-                    idType: document.getElementById('id-type').value,
-                    idNumber: document.getElementById('id-number').value,
-                    status: "pending",
-                    submittedAt: serverTimestamp()
-                });
-
-                await setDoc(doc(db, "users", auth.currentUser.uid), { kycStatus: "pending" }, { merge: true });
-                toast("KYC Submitted!", "success");
-            } catch (err) {
-                toast(err.message, "error");
-            } finally {
-                toggleLoader(false, btn);
-            }
-        };
     </script>
 </body>
 </html>
