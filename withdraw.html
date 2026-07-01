@@ -3,79 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Withdraw Payout — BluePay</title>
+    <title>Withdraw Profits | BluePay Vault</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body data-page="withdraw">
     <div id="global-loader"><div class="spinner"></div></div>
-
     <aside class="sidebar"></aside>
     <header class="mobile-header"></header>
 
     <main class="main-content">
         <div class="reveal" style="margin-bottom: 40px;">
             <h1>Withdraw Funds</h1>
-            <p style="color: var(--muted2);">Payouts are processed to your Nigerian bank account within 2-24 hours.</p>
+            <p>Available Balance: <b id="withdraw-bal" class="gold-text">₦0.00</b></p>
         </div>
 
         <div class="grid" style="grid-template-columns: 1.5fr 1fr; gap: 30px;">
             <div class="card reveal">
                 <form id="withdraw-form">
                     <div class="auth-input-group">
-                        <label>Select Bank</label>
-                        <select id="bank-name" required>
+                        <label>Beneficiary Bank</label>
+                        <select id="w-bank" required>
                             <option value="">Select Bank...</option>
-                            <option value="Access Bank">Access Bank</option>
                             <option value="GTBank">GTBank</option>
                             <option value="Zenith Bank">Zenith Bank</option>
-                            <option value="Kuda Bank">Kuda Bank</option>
+                            <option value="First Bank">First Bank</option>
+                            <option value="Access Bank">Access Bank</option>
+                            <option value="UBA">UBA</option>
+                            <option value="Kuda">Kuda Bank</option>
+                            <option value="Opay">Opay / PalmPay</option>
                             <option value="Moniepoint">Moniepoint</option>
-                            <option value="Opay">Opay</option>
-                            <option value="Palmpay">Palmpay</option>
                         </select>
                     </div>
                     <div class="grid-2">
                         <div class="auth-input-group">
                             <label>Account Number</label>
-                            <input type="number" id="account-number" placeholder="0123456789" required>
+                            <input type="number" id="w-account" placeholder="0123456789" required minlength="10" maxlength="10">
                         </div>
                         <div class="auth-input-group">
                             <label>Account Holder Name</label>
-                            <input type="text" id="account-name" placeholder="John Doe" required>
+                            <input type="text" id="w-name" placeholder="Full Bank Name" required>
                         </div>
                     </div>
                     <div class="grid-2">
                         <div class="auth-input-group">
                             <label>Withdrawal Amount (₦)</label>
-                            <input type="number" id="withdraw-amount" placeholder="Min 1,000" min="1000" required>
+                            <input type="number" id="w-amt" placeholder="Min 1,000" required>
                         </div>
                         <div class="auth-input-group">
-                            <label>Security Code</label>
-                            <input type="text" id="withdraw-code" placeholder="WDC-XXXX-XXXX" required>
+                            <label>Security Code (WDC)</label>
+                            <input type="text" id="w-code" placeholder="WDC-XXXX-XXXX" required>
                         </div>
                     </div>
-                    <button type="submit" id="w-submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Request Payout</button>
+                    <button type="submit" id="withdraw-btn" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Submit Payout Request</button>
                 </form>
             </div>
 
             <div class="grid" style="gap: 20px;">
-                <div class="card reveal" style="background: rgba(212,175,55,0.05); border-color: var(--border-gold);">
-                    <h4 style="color: var(--gold); margin-bottom: 15px;"><i class="fa-solid fa-circle-info"></i> Payout Policy</h4>
-                    <ul style="font-size: 13px; color: var(--muted2); list-style: none;">
-                        <li style="margin-bottom: 10px;">• Minimum withdrawal: ₦1,000</li>
-                        <li style="margin-bottom: 10px;">• Withdrawal codes are required</li>
-                        <li style="margin-bottom: 10px;">• Requests are manually reviewed</li>
-                        <li>• 24/7 Processing active</li>
+                <div id="no-code-warn" class="card reveal" style="background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.2);">
+                    <i class="fa-solid fa-triangle-exclamation" style="color: var(--red); font-size: 24px; margin-bottom: 15px;"></i>
+                    <h4>Validator Required</h4>
+                    <p style="font-size: 13px; margin: 10px 0 20px;">You need an active security code to authorize a withdrawal.</p>
+                    <a href="buy-code.html" class="btn btn-gold" style="width: 100%; font-size: 13px; min-height: 40px;">Get Code Now</a>
+                </div>
+                <div class="card reveal">
+                    <h4>Payout Policy</h4>
+                    <ul style="font-size: 13px; margin-top: 15px;" class="grid">
+                        <li class="flex" style="gap:10px;"><i class="fa-solid fa-clock" style="color:var(--blue2)"></i> Processing: 2-24 Hours</li>
+                        <li class="flex" style="gap:10px;"><i class="fa-solid fa-shield-check" style="color:var(--blue2)"></i> Security verification active</li>
+                        <li class="flex" style="gap:10px;"><i class="fa-solid fa-circle-info" style="color:var(--blue2)"></i> Max 1 request per code</li>
                     </ul>
                 </div>
             </div>
         </div>
 
         <div class="card reveal" style="margin-top: 40px; padding: 0; overflow: hidden;">
-            <div style="padding: 20px; border-bottom: 1px solid var(--border);"><h3>Withdrawal History</h3></div>
-            <div id="w-history-list" style="padding: 10px;">
-                <p style="text-align: center; padding: 30px; color: var(--muted2);">No withdrawal history yet.</p>
+            <div style="padding: 20px 25px; border-bottom: 1px solid var(--border);"><h3>Payout History</h3></div>
+            <div id="withdraw-history" class="table-wrapper">
+                <table style="width: 100%;">
+                    <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+                    <tbody id="w-history-body"></tbody>
+                </table>
             </div>
         </div>
     </main>
@@ -84,79 +92,96 @@
 
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { auth, db, toast, fmtN } from './firebase-config.js';
+        import { auth, db, fmtN, requireAuth, updateWallet, showToast } from './firebase-config.js';
+        import { initAppShell, toggleLoader } from './components.js';
         import { collection, query, where, getDocs, updateDoc, doc, addDoc, serverTimestamp, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { toggleLoader } from './components.js';
 
-        const form = document.getElementById('withdraw-form');
+        requireAuth(async user => {
+            initAppShell('withdraw');
+            let currentBal = 0;
 
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('w-submit');
-            const amt = parseFloat(document.getElementById('withdraw-amount').value);
-            const codeVal = document.getElementById('withdraw-code').value.trim();
+            onSnapshot(doc(db, "users", user.uid), snap => {
+                currentBal = snap.data().balance;
+                document.getElementById('withdraw-bal').innerText = fmtN(currentBal);
+            });
 
-            toggleLoader(true, btn);
+            // Check for valid codes to hide warning
+            const qCodes = query(collection(db, "codes"), where("uid", "==", user.uid), where("used", "==", false));
+            onSnapshot(qCodes, snap => {
+                const active = snap.docs.filter(d => d.data().expiresAt.toDate() > new Date());
+                document.getElementById('no-code-warn').style.display = active.length > 0 ? 'none' : 'block';
+            });
 
-            try {
-                // 1. Verify Code
-                const q = query(collection(db, "codes"), where("code", "==", codeVal), where("uid", "==", auth.currentUser.uid), where("used", "==", false));
-                const snap = await getDocs(q);
+            document.getElementById('withdraw-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('withdraw-btn');
+                const amt = parseFloat(document.getElementById('w-amt').value);
+                const codeVal = document.getElementById('w-code').value.trim();
 
-                if (snap.empty) throw new Error("Invalid or used security code.");
-                const codeDoc = snap.docs[0];
-                if (codeDoc.data().expiresAt.toDate() < new Date()) throw new Error("Security code has expired.");
+                if (amt < 1000) return showToast("Minimum withdrawal is ₦1,000", "warning");
+                if (amt > currentBal) return showToast("Insufficient balance", "error");
 
-                // 2. Check Balance
-                const userSnap = await getDocs(query(collection(db, "users"), where("uid", "==", auth.currentUser.uid)));
-                const userData = userSnap.docs[0].data();
-                if (userData.balance < amt) throw new Error("Insufficient wallet balance.");
+                toggleLoader(btn, true, "Processing Request...");
 
-                // 3. Process Transaction (Transaction for atomicity is ideal here)
-                await addDoc(collection(db, "withdrawals"), {
-                    uid: auth.currentUser.uid,
-                    amount: amt,
-                    bank: document.getElementById('bank-name').value,
-                    accountNumber: document.getElementById('account-number').value,
-                    accountName: document.getElementById('account-name').value,
-                    status: "pending",
-                    code: codeVal,
-                    createdAt: serverTimestamp()
-                });
+                try {
+                    // 1. Validate Code
+                    const codeQuery = query(collection(db, "codes"), where("code", "==", codeVal), where("used", "==", false));
+                    const codeSnap = await getDocs(codeQuery);
+                    
+                    if (codeSnap.empty) throw new Error("Invalid or used security code.");
+                    const codeDoc = codeSnap.docs[0];
+                    if (codeDoc.data().uid !== user.uid) throw new Error("Code ownership mismatch.");
+                    if (codeDoc.data().expiresAt.toDate() < new Date()) throw new Error("This code has expired.");
 
-                // Mark code as used and debit balance
-                await updateDoc(doc(db, "codes", codeDoc.id), { used: true });
-                await updateDoc(doc(db, "users", userSnap.docs[0].id), { 
-                    balance: userData.balance - amt,
-                    totalWithdrawn: userData.totalWithdrawn + amt
-                });
+                    // 2. Submit Withdrawal
+                    await addDoc(collection(db, "withdrawals"), {
+                        uid: user.uid,
+                        amount: amt,
+                        bankName: document.getElementById('w-bank').value,
+                        accountNumber: document.getElementById('w-account').value,
+                        accountName: document.getElementById('w-name').value,
+                        status: "pending",
+                        code: codeVal,
+                        createdAt: serverTimestamp()
+                    });
 
-                toast("Withdrawal request submitted!", "success");
-                form.reset();
-            } catch (err) {
-                toast(err.message, "error");
-            } finally {
-                toggleLoader(false, btn);
-            }
-        };
+                    // 3. Update Code and Balance
+                    await updateDoc(doc(db, "codes", codeDoc.id), { used: true });
+                    await updateWallet(user.uid, amt, 'debit', {
+                        type: 'withdrawal',
+                        description: `Payout to ${document.getElementById('w-bank').value}`,
+                        status: 'pending'
+                    });
 
-        // Real-time History
-        const whq = query(collection(db, "withdrawals"), where("uid", "==", auth.currentUser?.uid || ""), orderBy("createdAt", "desc"));
-        onSnapshot(whq, (snap) => {
-            const cont = document.getElementById('w-history-list');
-            if (snap.empty) return;
-            cont.innerHTML = snap.docs.map(doc => {
-                const w = doc.data();
-                return `
-                    <div class="flex-between" style="padding: 15px; border-bottom: 1px solid var(--border);">
-                        <div>
-                            <p style="font-weight: 700;">${fmtN(w.amount)}</p>
-                            <p style="font-size: 11px; color: var(--muted2);">${w.bank} • ${w.status.toUpperCase()}</p>
-                        </div>
-                        <span class="badge ${w.status === 'pending' ? 'badge-warning' : 'badge-success'}">${w.status}</span>
-                    </div>
-                `;
-            }).join('');
+                    showToast("Withdrawal request submitted for approval!", "success");
+                    e.target.reset();
+                } catch (err) {
+                    showToast(err.message, "error");
+                } finally {
+                    toggleLoader(btn, false, "Submit Payout Request");
+                }
+            };
+
+            // History
+            const qHistory = query(collection(db, "withdrawals"), where("uid", "==", user.uid), orderBy("createdAt", "desc"));
+            onSnapshot(qHistory, snap => {
+                const body = document.getElementById('w-history-body');
+                if (snap.empty) {
+                    body.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 40px; color:var(--muted)">No history.</td></tr>`;
+                    return;
+                }
+                body.innerHTML = snap.docs.map(doc => {
+                    const w = doc.data();
+                    return `
+                        <tr>
+                            <td>${w.createdAt ? w.createdAt.toDate().toLocaleDateString() : '...'}</td>
+                            <td style="font-weight:800;">${fmtN(w.amount)}</td>
+                            <td>${w.bankName}</td>
+                            <td><span class="badge ${w.status === 'pending' ? 'badge-warning' : (w.status === 'completed' ? 'badge-success' : 'badge-danger')}">${w.status}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            });
         });
     </script>
 </body>
