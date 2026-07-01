@@ -2,48 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Investment Plans — BluePay</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Investment Plans | BluePay</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .plans-header { padding: 120px 0 60px; text-align: center; }
+        .plan-card { display: flex; flex-direction: column; height: 100%; }
+        .plan-card h2 { margin: 15px 0; }
+        .plan-feature { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted2); margin-bottom: 12px; }
+        .plan-feature i { color: var(--green); font-size: 14px; }
+    </style>
 </head>
-<body data-page="index">
+<body data-page="public">
     <div id="global-loader"><div class="spinner"></div></div>
-    
-    <header class="mobile-header" style="display: flex;">
+
+    <nav class="mobile-header" style="display: flex;">
         <a href="index.html" class="flex" style="gap: 10px;">
-            <div style="width: 32px; height: 32px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white;"></i></div>
+            <div style="width: 32px; height: 32px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-b" style="color: white; font-size: 14px;"></i></div>
             <span style="font-size: 20px; font-weight: 900;">BluePay</span>
         </a>
-    </header>
+        <a href="register.html" class="btn btn-primary" style="padding: 0 15px; min-height: 36px; font-size: 12px;">Get ₦200k Bonus</a>
+    </nav>
 
-    <main class="container" style="padding-top: 120px; padding-bottom: 100px;">
-        <div class="reveal" style="text-align: center; margin-bottom: 60px;">
-            <h1 style="font-size: clamp(32px, 5vw, 48px); margin-bottom: 15px;">Pick your <span class="grad-text">profit path.</span></h1>
-            <p style="color: var(--muted2); max-width: 600px; margin: 0 auto;">From entry-level savings to high-yield elite portfolios, choose a plan that matches your goals.</p>
-        </div>
+    <div class="plans-header container">
+        <h1 class="reveal">Build your <span class="grad-text">Digital Fortune.</span></h1>
+        <p class="reveal" style="max-width: 600px; margin: 20px auto 60px;">Choose a portfolio that matches your risk profile. From entry-level savings to elite high-yield growth.</p>
 
-        <div class="grid" id="public-plans" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px;">
-            <!-- Skeletons -->
-            <div class="skeleton" style="height: 300px;"></div>
-            <div class="skeleton" style="height: 300px;"></div>
-            <div class="skeleton" style="height: 300px;"></div>
+        <div id="plans-grid" class="grid-3 reveal">
+            <!-- Plans Injected -->
+            <div style="padding: 100px; grid-column: 1/-1; text-align: center;"><div class="spinner" style="margin: 0 auto;"></div></div>
         </div>
-    </main>
+    </div>
 
     <script src="app.js" type="module"></script>
     <script type="module">
-        import { INVESTMENT_PLANS, fmtN } from './firebase-config.js';
-        const cont = document.getElementById('public-plans');
-        cont.innerHTML = INVESTMENT_PLANS.map(p => `
-            <div class="card reveal" style="border-color: ${p.roiPercent > 40 ? 'var(--border-gold)' : 'var(--border)'}">
-                <span class="badge ${p.roiPercent > 40 ? 'badge-warning' : 'badge-pending'}">${p.name.toUpperCase()}</span>
-                <h1 style="margin: 20px 0; font-size: 42px;" class="${p.roiPercent > 40 ? 'gold-text' : 'grad-text'}">${p.roiPercent}%</h1>
-                <div class="flex-between" style="font-weight: 700; margin-bottom: 10px;"><span>Duration</span><span>${p.durationDays} Days</span></div>
-                <div class="flex-between" style="font-weight: 700; margin-bottom: 25px;"><span>Min Entry</span><span>${fmtN(p.min)}</span></div>
-                <a href="register.html" class="btn btn-primary" style="width: 100%;">Start Investing</a>
+        import { PLAN_DEFINITIONS, fmtN, auth } from './firebase-config.js';
+        
+        const grid = document.getElementById('plans-grid');
+        grid.innerHTML = PLAN_DEFINITIONS.map(p => `
+            <div class="card plan-card" style="border-color: ${p.roi > 40 ? 'var(--gold)' : 'var(--border)'}">
+                <div class="flex-between">
+                    <span class="badge ${p.roi > 40 ? 'badge-warning' : 'badge-pending'}">${p.id}</span>
+                    <h2 class="${p.roi > 40 ? 'gold-text' : 'grad-text'}">${p.roi}% ROI</h2>
+                </div>
+                <h3 style="margin-bottom: 20px;">${p.name} Plan</h3>
+                <div style="margin-bottom: 30px; flex: 1;">
+                    <div class="plan-feature"><i class="fa-solid fa-circle-check"></i> <span>Duration: <b>${p.days} Days</b></span></div>
+                    <div class="plan-feature"><i class="fa-solid fa-circle-check"></i> <span>Min Investment: <b>${fmtN(p.min)}</b></span></div>
+                    <div class="plan-feature"><i class="fa-solid fa-circle-check"></i> <span>Max Investment: <b>${p.max === Infinity ? 'Unlimited' : fmtN(p.max)}</b></span></div>
+                    <div class="plan-feature"><i class="fa-solid fa-circle-check"></i> <span>24h Payout Cycle</span></div>
+                </div>
+                <button class="btn btn-primary" onclick="startInvest('${p.id}')" style="width: 100%;">Invest Now</button>
             </div>
         `).join('');
+
+        window.startInvest = (id) => {
+            if (!auth.currentUser) {
+                window.location.href = "login.html";
+            } else {
+                window.location.href = "invest.html?plan=" + id;
+            }
+        };
     </script>
 </body>
 </html>
