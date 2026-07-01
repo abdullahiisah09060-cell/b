@@ -2,10 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>Dashboard | BluePay Vault</title>
     <link rel="stylesheet" href="global.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .balance-card { background: linear-gradient(135deg, var(--bg3), var(--bg4)); border: 1px solid var(--border-blue); padding: var(--space-8); border-radius: 24px; position: relative; margin-bottom: var(--space-8); }
+        .balance-glow { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, var(--blue-glow) 0%, transparent 50%); opacity: 0; transition: opacity 0.5s; pointer-events: none; }
+        .balance-card.pulse .balance-glow { opacity: 1; }
+        
+        .action-card { text-align: center; padding: var(--space-6); background: var(--bg2); border: 1px solid var(--border); border-radius: 18px; transition: 0.3s; text-decoration: none; }
+        .action-card:hover { border-color: var(--blue2); transform: translateY(-5px); }
+        .action-icon { width: 50px; height: 50px; border-radius: 12px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 20px; margin: 0 auto 15px; color: var(--blue2); }
+        
+        @media (max-width: 600px) {
+            .action-grid { grid-template-columns: repeat(2, 1fr); }
+            .balance-card { padding: var(--space-6); }
+        }
+    </style>
 </head>
 <body data-page="dashboard">
     <div id="global-loader"><div class="spinner"></div></div>
@@ -15,73 +29,51 @@
 
     <main class="main-content">
         <div class="reveal" style="margin-bottom: 40px;">
-            <h1 id="user-greeting" style="font-size: 28px;">Good Day, Investor</h1>
-            <p>Here is your portfolio summary for today.</p>
+            <h1 id="user-greet">Good Morning, Investor</h1>
+            <p>Your portfolio is currently optimized for growth.</p>
         </div>
 
-        <!-- Master Balance Card -->
-        <div class="card reveal" style="background: linear-gradient(135deg, var(--bg3), var(--bg4)); border: 1px solid var(--border-blue); padding: 35px; margin-bottom: 30px;">
+        <!-- Master Balance -->
+        <div class="balance-card reveal" id="master-bal-card">
+            <div class="balance-glow"></div>
             <div class="flex-between">
-                <p class="text-micro" style="letter-spacing: 2px;">TOTAL WALLET BALANCE</p>
-                <i id="bal-toggle" class="fa-solid fa-eye" style="cursor: pointer; color: var(--muted); font-size: 20px;"></i>
+                <p class="text-micro">TOTAL WALLET BALANCE</p>
+                <i id="bal-eye" class="fa-solid fa-eye" style="cursor: pointer; color: var(--muted); font-size: 18px;"></i>
             </div>
-            <h1 id="main-balance" style="font-size: 48px; margin: 15px 0 30px;">₦0.00</h1>
+            <h1 id="main-bal" style="font-size: 48px; margin: 15px 0 35px;">₦0.00</h1>
             
-            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 20px; padding-top: 30px; border-top: 1px solid var(--border);">
-                <div>
-                    <p class="text-micro" style="font-size: 10px;">INVESTED</p>
-                    <h3 id="stat-invested" class="grad-text">₦0.00</h3>
-                </div>
-                <div>
-                    <p class="text-micro" style="font-size: 10px;">EARNED</p>
-                    <h3 id="stat-earned" style="color: var(--green);">₦0.00</h3>
-                </div>
-                <div>
-                    <p class="text-micro" style="font-size: 10px;">WITHDRAWN</p>
-                    <h3 id="stat-withdrawn" style="color: var(--orange);">₦0.00</h3>
+            <div class="grid-3" style="border-top: 1px solid var(--border); padding-top: 30px;">
+                <div><p class="text-micro" style="font-size: 10px;">INVESTED</p><h3 id="stat-inv">₦0.00</h3></div>
+                <div><p class="text-micro" style="font-size: 10px;">EARNED</p><h3 id="stat-earned" style="color:var(--green)">₦0.00</h3></div>
+                <div><p class="text-micro" style="font-size: 10px;">WITHDRAWN</p><h3 id="stat-with">₦0.00</h3></div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid-2 action-grid reveal" style="margin-bottom: 50px;">
+            <div class="grid-2" style="gap: 15px;">
+                <a href="deposit.html" class="action-card"><div class="action-icon"><i class="fa-solid fa-wallet"></i></div><span style="font-weight: 700;">Deposit</span></a>
+                <a href="invest.html" class="action-card"><div class="action-icon" style="color:var(--gold)"><i class="fa-solid fa-chart-line"></i></div><span style="font-weight: 700;">Invest</span></a>
+                <a href="withdraw.html" class="action-card"><div class="action-icon" style="color:var(--green)"><i class="fa-solid fa-bank"></i></div><span style="font-weight: 700;">Withdraw</span></a>
+                <a href="buy-code.html" class="action-card"><div class="action-icon" style="color:var(--purple)"><i class="fa-solid fa-key"></i></div><span style="font-weight: 700;">Validator</span></a>
+            </div>
+            <div class="card" style="background: rgba(212,175,55,0.05); border-color: rgba(212,175,55,0.2);">
+                <div class="flex-between"><h3>Active Tier</h3><a href="invest.html" class="gold-text" style="font-size: 12px; font-weight: 700;">VIEW ALL</a></div>
+                <div id="active-plan-mini" style="margin-top: 20px;">
+                    <p style="font-size: 14px; color: var(--muted2);">No active investments found. Start earning daily ROI today.</p>
+                    <a href="investment-plans.html" class="btn btn-gold" style="width: 100%; margin-top: 20px; min-height: 40px; font-size: 13px;">Explore Plans</a>
                 </div>
             </div>
         </div>
 
-        <!-- Action Grid -->
-        <div class="grid-2 reveal" style="margin-bottom: 40px;">
-            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 15px;">
-                <a href="deposit.html" class="card flex-center" style="flex-direction: column; gap: 12px; padding: 25px; text-align: center;">
-                    <div style="width: 45px; height: 45px; border-radius: 50%; background: rgba(59,130,246,0.1); color: var(--blue2); display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-plus"></i></div>
-                    <span style="font-weight: 700; font-size: 14px;">Deposit</span>
-                </a>
-                <a href="invest.html" class="card flex-center" style="flex-direction: column; gap: 12px; padding: 25px; text-align: center;">
-                    <div style="width: 45px; height: 45px; border-radius: 50%; background: rgba(212,175,55,0.1); color: var(--gold); display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-chart-line"></i></div>
-                    <span style="font-weight: 700; font-size: 14px;">Invest</span>
-                </a>
-                <a href="withdraw.html" class="card flex-center" style="flex-direction: column; gap: 12px; padding: 25px; text-align: center;">
-                    <div style="width: 45px; height: 45px; border-radius: 50%; background: rgba(34,197,94,0.1); color: var(--green); display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-bank"></i></div>
-                    <span style="font-weight: 700; font-size: 14px;">Withdraw</span>
-                </a>
-                <a href="buy-code.html" class="card flex-center" style="flex-direction: column; gap: 12px; padding: 25px; text-align: center;">
-                    <div style="width: 45px; height: 45px; border-radius: 50%; background: rgba(168,85,247,0.1); color: var(--purple); display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-key"></i></div>
-                    <span style="font-weight: 700; font-size: 14px;">Validator</span>
-                </a>
-            </div>
-            
-            <div class="card reveal" style="background: rgba(168,85,247,0.05); border-color: rgba(168,85,247,0.2);">
-                <h3 style="margin-bottom: 10px;">Referral Earnings</h3>
-                <p style="font-size: 14px; margin-bottom: 25px;">Earn ₦2,000 for every friend who starts their investment journey.</p>
-                <div class="flex-between" style="background: var(--bg); padding: 15px; border-radius: 12px; border: 1px dashed var(--border);">
-                    <code id="ref-code-display" style="color: var(--blue2); font-weight: 800; font-size: 16px;">LOADING...</code>
-                    <button id="copy-ref-btn" style="background: none; border: none; color: var(--muted); cursor: pointer;"><i class="fa-solid fa-copy"></i></button>
-                </div>
-                <a href="referrals.html" class="btn btn-outline" style="width: 100%; margin-top: 20px; font-size: 13px;">View Affiliate Dashboard</a>
-            </div>
-        </div>
-
+        <!-- Transactions Section -->
         <div class="card reveal" style="padding: 0; overflow: hidden;">
             <div class="flex-between" style="padding: 20px 25px; border-bottom: 1px solid var(--border);">
                 <h3>Recent Activity</h3>
-                <a href="transactions.html" class="gold-text" style="font-size: 13px; font-weight: 700;">View All</a>
+                <a href="transactions.html" style="font-size: 13px; font-weight: 700; color: var(--blue2);">View Full History</a>
             </div>
-            <div id="tx-list-dash" style="min-height: 200px;">
-                <!-- Activity loaded via JS -->
+            <div id="mini-tx-list">
+                <!-- Tx loading -->
                 <div style="padding: 40px; text-align: center;"><div class="spinner" style="margin: 0 auto;"></div></div>
             </div>
         </div>
@@ -92,77 +84,82 @@
     <script src="app.js" type="module"></script>
     <script type="module">
         import { auth, db, fmtN, requireAuth } from './firebase-config.js';
-        import { initAppShell, showToast } from './components.js';
+        import { initAppShell } from './components.js';
         import { doc, onSnapshot, collection, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         requireAuth(user => {
             initAppShell('dashboard');
             let isVisible = true;
-            let rawBalance = 0;
+            let lastBal = -1;
 
-            // 1. Greet User
+            // 1. Greet
             const hr = new Date().getHours();
             const greet = hr < 12 ? "Good Morning" : (hr < 17 ? "Good Afternoon" : "Good Evening");
-            document.getElementById('user-greeting').innerText = `${greet}, ${user.displayName.split(' ')[0]} 👋`;
+            document.getElementById('user-greet').innerText = `${greet}, ${user.displayName.split(' ')[0]} 👋`;
 
-            // 2. Real-time User Data
-            onSnapshot(doc(db, "users", user.uid), (snap) => {
+            // 2. Real-time Balance
+            onSnapshot(doc(db, "users", user.uid), snap => {
                 const d = snap.data();
                 if (!d) return;
-                rawBalance = d.balance;
-                updateBalanceUI();
-                document.getElementById('stat-invested').innerText = fmtN(d.totalInvested);
+
+                const bal = d.balance;
+                if (lastBal !== -1 && lastBal !== bal) {
+                    const card = document.getElementById('master-bal-card');
+                    card.classList.add('pulse');
+                    setTimeout(() => card.classList.remove('pulse'), 1000);
+                }
+                lastBal = bal;
+
+                document.getElementById('main-bal').innerText = isVisible ? fmtN(bal) : "₦ • • • • •";
+                document.getElementById('stat-inv').innerText = fmtN(d.totalInvested);
                 document.getElementById('stat-earned').innerText = fmtN(d.totalEarned);
-                document.getElementById('stat-withdrawn').innerText = fmtN(d.totalWithdrawn);
-                document.getElementById('ref-code-display').innerText = d.referralCode;
+                document.getElementById('stat-with').innerText = fmtN(d.totalWithdrawn);
             });
 
-            function updateBalanceUI() {
-                document.getElementById('main-balance').innerText = isVisible ? fmtN(rawBalance) : "₦ • • • • •";
-            }
-
-            document.getElementById('bal-toggle').onclick = () => {
+            document.getElementById('bal-eye').onclick = () => {
                 isVisible = !isVisible;
-                document.getElementById('bal-toggle').className = `fa-solid ${isVisible ? 'fa-eye' : 'fa-eye-slash'}`;
-                updateBalanceUI();
+                document.getElementById('bal-eye').className = `fa-solid ${isVisible ? 'fa-eye' : 'fa-eye-slash'}`;
+                document.getElementById('main-bal').innerText = isVisible ? fmtN(lastBal) : "₦ • • • • •";
             };
 
-            // 3. Recent Activity
+            // 3. Mini Transactions
             const qTx = query(collection(db, "transactions"), where("uid", "==", user.uid), orderBy("createdAt", "desc"), limit(5));
-            onSnapshot(qTx, (snap) => {
-                const cont = document.getElementById('tx-list-dash');
+            onSnapshot(qTx, snap => {
+                const cont = document.getElementById('mini-tx-list');
                 if (snap.empty) {
-                    cont.innerHTML = `<div style="padding: 60px 0; text-align: center; color: var(--muted2); font-size: 14px;"><i class="fa-solid fa-receipt" style="font-size: 30px; display: block; margin-bottom: 10px; opacity: 0.3;"></i>No transactions yet.</div>`;
+                    cont.innerHTML = `<div style="padding: 60px; text-align: center; color: var(--muted2); font-size: 14px;">No transactions yet.</div>`;
                     return;
                 }
                 cont.innerHTML = snap.docs.map(doc => {
                     const tx = doc.data();
-                    const isCredit = ["deposit", "bonus", "return", "daily_claim", "referral_bonus"].includes(tx.type);
+                    const isPlus = ["deposit", "bonus", "return", "daily_claim", "referral_bonus"].includes(tx.type);
                     return `
                         <div class="flex-between" style="padding: 18px 25px; border-bottom: 1px solid var(--border);">
                             <div class="flex" style="gap: 15px;">
-                                <div style="width: 38px; height: 38px; border-radius: 10px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 14px; color: ${isCredit ? 'var(--green)' : 'var(--muted)'};">
-                                    <i class="fa-solid ${isCredit ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'}"></i>
-                                </div>
-                                <div>
-                                    <p style="font-weight: 700; color: white; font-size: 14px;">${tx.description}</p>
-                                    <p style="font-size: 11px; font-weight: 600;">${tx.status.toUpperCase()}</p>
-                                </div>
+                                <div style="width: 35px; height: 35px; border-radius: 8px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 14px; color: ${isPlus ? 'var(--green)' : 'var(--muted)'};"><i class="fa-solid ${isPlus ? 'fa-arrow-up' : 'fa-arrow-down'}"></i></div>
+                                <div><p style="font-weight: 700; color: white; font-size: 14px;">${tx.description}</p><p style="font-size: 11px;">${tx.status.toUpperCase()}</p></div>
                             </div>
-                            <span style="font-weight: 800; color: ${isCredit ? 'var(--green)' : 'white'};">
-                                ${isCredit ? '+' : '-'}${fmtN(tx.amount)}
-                            </span>
+                            <span style="font-weight: 800; color: ${isPlus ? 'var(--green)' : 'white'};">${isPlus ? '+' : '-'}${fmtN(tx.amount)}</span>
                         </div>
                     `;
                 }).join('');
             });
 
-            // 4. Copy Ref Code
-            document.getElementById('copy-ref-btn').onclick = () => {
-                const code = document.getElementById('ref-code-display').innerText;
-                navigator.clipboard.writeText(code);
-                showToast("Referral code copied!", "success");
-            };
+            // 4. Active Plan Mini
+            const qInv = query(collection(db, "investments"), where("uid", "==", user.uid), where("status", "==", "active"), limit(1));
+            onSnapshot(qInv, snap => {
+                const cont = document.getElementById('active-plan-mini');
+                if (snap.empty) return;
+                const inv = snap.docs[0].data();
+                cont.innerHTML = `
+                    <div style="background: var(--bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+                        <p class="text-micro" style="margin-bottom: 5px;">${inv.planName} Plan</p>
+                        <h3 style="margin-bottom: 15px;">${fmtN(inv.principal)}</h3>
+                        <div class="flex-between" style="font-size: 12px;"><span>Daily Yield</span><b style="color:var(--green)">+${fmtN(inv.dailyYield)}</b></div>
+                    </div>
+                    <a href="invest.html" class="btn btn-outline" style="width: 100%; margin-top: 15px; min-height: 40px; font-size: 13px;">Manage Investments</a>
+                `;
+            });
         });
     </script>
 </body>
